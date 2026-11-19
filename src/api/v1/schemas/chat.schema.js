@@ -12,16 +12,17 @@ export const chatRequestSchema = z.object({
 });
 
 export const chatAnswerSchema = z.object({
-  headline: z.string().optional(),
-  summary: z.string().optional(),
-  detail: z.string().optional(),
-  columns: z.array(z.object({ name: z.string(), type: z.string().optional() })),
-  rows: z.array(z.array(z.unknown())),
-  highlight_rows: z.array(z.number().int().nonnegative()).optional(),
-  row_count: z.number().int().nonnegative(),
-  truncated: z.boolean(),
-  chart_hint: z.unknown().optional(),
-  clarification_question: z.string().optional(),
+  headline: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+  detail: z.string().nullable().optional(),
+  columns: z.array(z.object({ name: z.string(), type: z.string().optional() })).default([]),
+  rows: z.array(z.array(z.unknown())).default([]),
+  highlight_rows: z.array(z.number().int().nonnegative()).nullable().optional(),
+  row_count: z.number().int().nonnegative().default(0),
+  truncated: z.boolean().default(false),
+  chart_hint: z.unknown().nullable().optional(),
+  clarification_question: z.string().nullable().optional(),
+  options: z.array(z.string()).default([]),
 });
 
 export const chatResponseSchema = z.object({
@@ -30,12 +31,15 @@ export const chatResponseSchema = z.object({
   follow_ups: z.array(z.string()).default([]),
   meta: z.object({
     latency_ms: z.number().nonnegative(),
-    conversation_id: z.string().optional(),
+    conversation_id: z.string().nullable().optional(),
+    cache: z.string().optional(),
   }),
   error: z.object({
     code: z.string(),
     message: z.string().optional(),
     retryable: z.boolean(),
     retry_after_seconds: z.number().nonnegative().optional(),
-  }).optional(),
+  }).nullable().optional(),
+  conversation_id: z.string().nullable().optional(),
+  request_id: z.string().optional(),
 });

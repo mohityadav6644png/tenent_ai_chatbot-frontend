@@ -48,6 +48,7 @@ export function mapChatResponse(response) {
     conversationId: response.meta.conversation_id,
     followUps: response.follow_ups,
     clarificationQuestion: answer.clarification_question,
+    options: answer.options || [],
     error: response.error,
     errorMessage: response.error?.code,
     retryable: response.error?.retryable,
