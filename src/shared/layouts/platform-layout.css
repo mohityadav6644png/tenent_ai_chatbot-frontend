@@ -1,0 +1,23 @@
+.platform-shell { display: flex; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; background: var(--platform-page); }
+.platform-sidebar { display: flex; width: var(--platform-sidebar-width); flex: 0 0 var(--platform-sidebar-width); flex-direction: column; padding: var(--platform-sidebar-padding); color: var(--platform-sidebar-text); background: var(--platform-sidebar); }
+.platform-brand { display: grid; gap: var(--platform-space-1); }
+.platform-brand strong { color: var(--platform-white); font-size: 17px; font-weight: 600; }
+.platform-brand span { color: var(--platform-sidebar-muted); font-size: 12px; }
+.platform-nav { display: grid; gap: var(--platform-space-1); margin-top: var(--platform-layout-gap); }
+.platform-nav__link { display: flex; min-height: var(--platform-control-height); align-items: center; padding: 0 var(--platform-space-2); border-radius: var(--platform-radius); color: var(--platform-sidebar-text); font-size: 15px; }
+.platform-nav__link.is-active { color: var(--platform-white); background: var(--platform-sidebar-active); font-weight: 500; }
+.platform-identity { display: grid; gap: var(--platform-space-1); margin-top: auto; padding-top: var(--platform-space-4); border-top: var(--platform-border-width) solid var(--platform-sidebar-divider); }
+.platform-identity strong { color: var(--platform-white); font-size: 14px; font-weight: 500; }
+.platform-identity span { color: var(--platform-sidebar-muted); font-size: 13px; }
+.platform-logout.button { justify-self: start; min-height: var(--platform-control-height); margin-top: var(--platform-space-1); padding: 0; color: var(--platform-sidebar-text); background: transparent; font-size: 14px; font-weight: 500; }
+.platform-content { min-width: 0; flex: 1; overflow: auto; padding: var(--platform-main-padding); }
+.platform-menu-button.button,
+.platform-backdrop { display: none; }
+.platform-shell :focus-visible { outline: var(--platform-focus-width) solid var(--platform-focus); outline-offset: var(--platform-focus-offset); }
+@media (max-width: 900px) {
+  .platform-sidebar { position: fixed; z-index: 20; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform 180ms ease; }
+  .platform-sidebar.is-open { transform: translateX(0); }
+  .platform-backdrop { position: fixed; z-index: 19; inset: 0; display: block; border: 0; background: var(--platform-overlay); }
+  .platform-menu-button.button { display: inline-flex; min-height: var(--platform-control-height); margin-bottom: var(--platform-space-2); color: var(--platform-white); background: var(--platform-sidebar); }
+  .platform-content { padding: var(--platform-space-4); }
+}

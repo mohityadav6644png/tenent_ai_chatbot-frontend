@@ -1,0 +1,55 @@
+.invite-page { display: grid; width: 100%; min-width: 0; align-content: start; padding: var(--users-page-padding); }
+.invite-page-header h1 { margin: 0; color: var(--platform-text); font-size: var(--platform-font-heading); font-weight: 600; }
+.invite-page-header p { margin: var(--users-subtitle-gap) 0 0; color: var(--platform-muted); font-size: var(--platform-font-body); }
+.invite-form-card {
+  display: grid;
+  width: min(100%, var(--invite-card-width));
+  gap: var(--invite-form-gap);
+  margin-top: var(--invite-card-margin);
+  padding: var(--invite-card-padding);
+  border: var(--platform-border-width) solid var(--platform-border);
+  border-radius: var(--platform-card-radius);
+  background: var(--platform-surface);
+}
+.invite-form-fields { display: grid; gap: var(--invite-field-gap); }
+.invite-form-card .text-field { gap: var(--invite-label-gap); }
+.invite-form-card .text-field__label { color: var(--platform-text); font-size: var(--platform-font-body); font-weight: 500; }
+.invite-form-card .text-field__input {
+  height: var(--invite-control-height);
+  min-height: var(--invite-control-height);
+  padding: 0 var(--invite-control-padding);
+  border: var(--platform-border-width) solid var(--platform-input-border);
+  border-radius: var(--platform-radius);
+  color: var(--platform-text);
+  font-size: var(--platform-font-body);
+}
+.invite-form-card .text-field__input::placeholder { color: var(--platform-placeholder); }
+.invite-form-card .text-field__input:focus-visible {
+  border-color: var(--users-primary);
+  outline: var(--users-focus-width) solid var(--users-primary);
+  outline-offset: var(--users-focus-offset);
+}
+.invite-form-card .text-field__input--error { border-color: var(--platform-error); }
+.invite-form-card .text-field__input--error:focus-visible { outline-color: var(--platform-error); }
+.invite-form-card .text-field__error { color: var(--platform-error); font-size: var(--platform-font-label); }
+.invite-form-card .text-field__hint { margin: 0; color: var(--platform-muted); font-size: var(--platform-font-label); }
+.invite-form-error { margin: 0; color: var(--platform-error); font-size: var(--platform-font-body); }
+.invite-submit.button {
+  width: fit-content;
+  min-height: var(--platform-control-height);
+  margin-top: var(--invite-button-margin);
+  padding: var(--platform-header-action-padding);
+  border-radius: var(--users-button-radius);
+  color: var(--platform-white);
+  background: var(--users-primary);
+  font-size: var(--platform-font-body);
+  font-weight: 600;
+}
+.invite-submit.button:hover:not(:disabled) { background: var(--chat-teal-dark); }
+@media (max-width: 900px) {
+  .invite-page { padding: var(--platform-space-4); }
+  .invite-form-card { width: 100%; }
+}
+@media (max-width: 560px) {
+  .invite-page-header h1 { font-size: var(--platform-mobile-heading-size); }
+}

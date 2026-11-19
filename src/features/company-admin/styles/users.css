@@ -1,0 +1,94 @@
+.users-page {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  align-content: start;
+  gap: var(--users-card-gap);
+  padding: var(--users-page-padding);
+}
+.users-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--users-header-gap);
+}
+.users-page-header h1 {
+  margin: 0;
+  color: var(--platform-text);
+  font-size: var(--platform-font-heading);
+  font-weight: 600;
+}
+.users-page-header p {
+  margin: var(--users-subtitle-gap) 0 0;
+  color: var(--platform-muted);
+  font-size: var(--platform-font-body);
+}
+.users-invite-button.button {
+  min-height: var(--platform-control-height);
+  padding: var(--platform-header-action-padding);
+  border-radius: var(--users-button-radius);
+  color: var(--platform-white);
+  background: var(--users-primary);
+  font-size: var(--platform-font-body);
+  font-weight: 600;
+}
+.users-invite-button.button:hover:not(:disabled) { background: var(--chat-teal-dark); }
+.users-stats {
+  display: grid;
+  grid-template-columns: repeat(var(--users-stats-columns), minmax(0, 1fr));
+  gap: var(--users-stats-gap);
+}
+.users-table-card {
+  min-width: 0;
+}
+.users-table {
+  min-width: var(--users-table-min-width);
+}
+.users-table th { height: var(--users-table-header-height); }
+.users-actions-cell { text-align: right; }
+.users-name { font-weight: 500; }
+.users-email { color: var(--platform-muted) !important; }
+.users-row-actions { display: flex; align-items: center; justify-content: flex-end; }
+.users-row-action {
+  display: inline-flex;
+  min-height: var(--platform-control-height);
+  align-items: center;
+  margin-left: var(--users-action-margin);
+  padding: 0 var(--platform-space-2);
+  border: 0;
+  background: transparent;
+  font-size: var(--platform-font-body);
+  font-weight: 500;
+  cursor: pointer;
+}
+.users-row-action--primary { color: var(--users-primary-text); }
+.users-row-action--danger { color: var(--platform-danger); }
+.users-row-action:disabled { cursor: not-allowed; opacity: 0.55; }
+.user-row-you { color: var(--platform-muted); font-size: var(--platform-font-body); }
+.users-skeleton-row span {
+  display: block;
+  width: 72%;
+  height: var(--platform-font-body);
+  border-radius: var(--platform-radius);
+  background: var(--platform-page);
+}
+.users-empty { padding: var(--users-empty-padding); border: var(--platform-border-width) solid var(--platform-border); border-radius: var(--platform-card-radius); background: var(--platform-surface); }
+.users-load-error { display: flex; align-items: center; gap: var(--platform-space-2); }
+.users-retry.button { min-height: var(--platform-control-height); }
+.users-toast { display: flex; align-items: center; justify-content: space-between; gap: var(--platform-space-2); padding: var(--users-toast-padding); border: var(--platform-border-width) solid var(--platform-active-text); border-radius: var(--platform-radius); color: var(--platform-active-text); background: var(--platform-active-bg); font-size: var(--platform-font-body); }
+.users-toast .button { min-height: var(--platform-control-height); padding: 0 var(--platform-space-2); color: var(--platform-active-text); background: transparent; }
+.user-confirm-description { margin: var(--platform-dialog-gap) 0; color: var(--platform-text); font-size: var(--platform-font-body); }
+.user-confirm-actions { display: flex; justify-content: flex-end; gap: var(--platform-dialog-action-gap); }
+.user-confirm-cancel.button { color: var(--platform-text); background: var(--platform-page); }
+.user-confirm-danger.button { color: var(--platform-white); background: var(--platform-danger); }
+.user-confirm-danger.button:hover:not(:disabled) { background: var(--platform-suspended-text); }
+
+@media (max-width: 900px) {
+  .users-stats { grid-template-columns: 1fr; }
+  .users-page { padding: var(--platform-space-4); }
+}
+@media (max-width: 560px) {
+  .users-page-header { align-items: flex-start; flex-direction: column; }
+  .users-page-header h1 { font-size: var(--platform-mobile-heading-size); }
+  .users-load-error { align-items: flex-start; flex-direction: column; }
+}

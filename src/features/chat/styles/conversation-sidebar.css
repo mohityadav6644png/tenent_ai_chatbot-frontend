@@ -1,0 +1,33 @@
+.conversation-sidebar__footer {
+  display: flex;
+  min-height: var(--conversation-icon-size);
+  align-items: center;
+  gap: var(--space-chat-5);
+  padding-top: var(--space-chat-6);
+  border-top: 1px solid var(--conversation-border);
+}
+.avatar {
+  display: inline-grid;
+  width: var(--conversation-avatar-size);
+  height: var(--conversation-avatar-size);
+  flex: 0 0 var(--conversation-avatar-size);
+  place-items: center;
+  border-radius: var(--radius-circle);
+}
+.user-avatar { color: var(--conversation-text); background: var(--conversation-avatar-bg); font-size: 13px; font-weight: 600; }
+.conversation-sidebar__user { display: grid; min-width: 0; flex: 1; gap: var(--space-chat-20); }
+.conversation-sidebar__user strong { overflow: hidden; font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.conversation-sidebar__user small { color: var(--conversation-muted); font-size: 12px; }
+.icon-button {
+  display: inline-grid;
+  width: var(--conversation-icon-size);
+  height: var(--conversation-icon-size);
+  min-height: var(--conversation-icon-size);
+  padding: 0;
+  place-items: center;
+  border-radius: var(--radius-conversation);
+  color: var(--conversation-text);
+  background: transparent;
+}
+.icon-button svg,
+.conversation-menu-button svg { width: var(--space-chat-10); height: var(--space-chat-10); fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }

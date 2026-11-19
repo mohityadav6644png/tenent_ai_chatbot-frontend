@@ -1,0 +1,100 @@
+.conversation-screen {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  color: var(--conversation-heading);
+  background: var(--conversation-page);
+}
+.conversation-sidebar {
+  display: flex;
+  width: var(--conversation-sidebar-width);
+  flex: 0 0 var(--conversation-sidebar-width);
+  flex-direction: column;
+  gap: var(--conversation-gap);
+  padding: var(--conversation-sidebar-padding);
+  border-right: 1px solid var(--conversation-border);
+  background: var(--conversation-white);
+}
+.conversation-brand { display: flex; align-items: center; gap: var(--space-chat-5); }
+.conversation-brand__mark {
+  display: grid;
+  width: var(--conversation-brand-size);
+  height: var(--conversation-brand-size);
+  flex: 0 0 var(--conversation-brand-size);
+  place-items: center;
+  border-radius: var(--radius-conversation);
+  color: var(--conversation-white);
+  background: var(--conversation-teal);
+  font-weight: 600;
+}
+.conversation-brand strong,
+.conversation-brand small { display: block; }
+.conversation-brand strong { font-size: 15px; font-weight: 600; }
+.conversation-brand small { margin-top: var(--space-chat-1); color: var(--conversation-muted); font-size: 12px; }
+.new-chat-button {
+  width: 100%;
+  height: var(--space-chat-16);
+  min-height: var(--space-chat-16);
+  justify-content: flex-start;
+  gap: var(--space-chat-5);
+  border: 1px solid var(--conversation-input-border);
+  border-radius: var(--radius-conversation);
+  color: var(--conversation-text);
+  background: var(--conversation-white);
+  font-size: 14px;
+  font-weight: 500;
+}
+.new-chat-button span { font-size: var(--space-chat-10); line-height: 1; }
+.new-chat-button:hover:not(:disabled) { background: var(--conversation-page); }
+.conversation-sidebar__recent { min-height: 0; flex: 1; }
+.conversation-sidebar__recent h2 {
+  margin: 0 0 var(--space-chat-4) var(--space-chat-6);
+  color: var(--conversation-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.conversation-list { display: grid; gap: var(--space-chat-1); overflow-y: auto; }
+.conversation-list__link {
+  display: flex;
+  min-height: var(--space-chat-16);
+  align-items: center;
+  overflow: hidden;
+  padding: 0 var(--space-chat-6);
+  border-radius: var(--radius-conversation);
+  color: var(--conversation-text);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conversation-list__link:hover { background: var(--conversation-page); }
+.conversation-list__link.is-active { color: var(--conversation-active-text); background: var(--conversation-active); font-weight: 500; }
+.conversation-list__empty { padding: 0 var(--space-chat-6); color: var(--conversation-muted); font-size: 13px; }
+.conversation-menu-button svg { width: var(--space-chat-10); height: var(--space-chat-10); fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.conversation-main { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.conversation-header {
+  display: flex;
+  height: var(--conversation-header-height);
+  flex: 0 0 var(--conversation-header-height);
+  align-items: center;
+  gap: var(--space-chat-6);
+  padding: 0 var(--space-chat-14);
+  border-bottom: 1px solid var(--conversation-border);
+  background: var(--conversation-white);
+}
+.conversation-header h1 { min-width: 0; flex: 1; overflow: hidden; margin: 0; font-size: 16px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.read-only-pill { padding: var(--space-chat-19) var(--space-chat-6); color: var(--conversation-pill-text); background: var(--conversation-pill-bg); font-size: 12px; }
+.conversation-menu-button,
+.conversation-backdrop { display: none; }
+.conversation-screen :focus-visible { outline: var(--conversation-focus-width) solid var(--conversation-teal); outline-offset: var(--conversation-focus-offset); }
+@media (max-width: 900px) {
+  .conversation-sidebar { position: fixed; z-index: 20; inset: 0 auto 0 0; transform: translateX(-100%); transition: transform 180ms ease; }
+  .conversation-sidebar.is-open { transform: translateX(0); }
+  .conversation-menu-button { display: inline-grid; }
+  .conversation-backdrop { position: fixed; z-index: 19; inset: 0; display: block; border: 0; background: var(--conversation-backdrop); }
+}
+@media (max-width: 520px) {
+  .conversation-header { gap: var(--space-chat-4); padding: 0 var(--space-chat-6); }
+  .read-only-pill { padding: var(--space-chat-6) var(--space-chat-4); font-size: 11px; }
+}

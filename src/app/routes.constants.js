@@ -1,0 +1,18 @@
+export const ROUTES = Object.freeze({
+  HOME: '/',
+  LOGIN: '/login',
+  FORGOT_PASSWORD: '/forgot-password',
+  CHAT: '/chat',
+  ADMIN_USERS: '/admin/users',
+  COMPANY_USERS: '/admin/users',
+  PLATFORM_TENANTS: '/platform/tenants',
+  PLATFORM_ADMIN: '/platform/tenants',
+  PLATFORM_TENANT_NEW: '/platform/tenants/new',
+  PLATFORM_SYSTEM_HEALTH: '/platform/health',
+  PLATFORM_USAGE: '/platform/usage',
+  PLATFORM_AUDIT: '/platform/audit',
+  REPORTS: '/reports',
+  REPORTS_NEW: '/reports/new',
+  COMPANY_DATA: '/admin/company-data',
+  COMPANY_DATA_ADD: '/admin/company-data/add',
+});
