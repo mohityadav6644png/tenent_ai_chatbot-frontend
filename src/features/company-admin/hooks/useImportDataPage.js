@@ -35,6 +35,7 @@ export function useImportDataPage() {
   const [generalError, setGeneralError] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [importSuccess, setImportSuccess] = useState(null);
 
   const { preview, isLoading: isPreviewLoading, error: previewError, getPreview, clearPreview } =
     useImportPreview();
@@ -55,6 +56,7 @@ export function useImportDataPage() {
   const handleSelectDataset = (key) => {
     setSelectedDatasetKey(key);
     setGeneralError('');
+    setImportSuccess(null);
     if (file && !clientFileError) {
       getPreview({ dataset: key, file }).catch(() => {});
     }
@@ -64,6 +66,7 @@ export function useImportDataPage() {
     if (!selected) return;
     setGeneralError('');
     setToastMessage('');
+    setImportSuccess(null);
     setFile(selected);
 
     const err = validateCsvFile(selected);
@@ -82,6 +85,19 @@ export function useImportDataPage() {
 
   const importMutation = useImportDataset();
 
+  const resetForm = useCallback(() => {
+    setFile(null);
+    setClientFileError('');
+    clearPreview();
+    setGeneralError('');
+    setImportSuccess(null);
+    setToastMessage('');
+  }, [clearPreview]);
+
+  const handleAskChatbot = () => {
+    navigate(ROUTES.CHAT);
+  };
+
   const runImport = async () => {
     setGeneralError('');
     try {
@@ -93,11 +109,10 @@ export function useImportDataPage() {
       const savedCount = (result.inserted ?? 0) + (result.updated ?? 0);
       const skippedCount = result.skipped ?? 0;
       const label = selectedDataset?.label || 'Dataset';
-      const msg = `${label} imported: ${savedCount} saved, ${skippedCount} skipped`;
-      setToastMessage(msg);
-      navigate(ROUTES.COMPANY_DATA, {
-        replace: true,
-        state: { successToast: msg },
+      setImportSuccess({
+        datasetLabel: label,
+        saved: savedCount,
+        skipped: skippedCount,
       });
     } catch (err) {
       setGeneralError(mapImportError(err));
@@ -156,6 +171,9 @@ export function useImportDataPage() {
     setIsConfirmOpen,
     handleDownloadTemplate,
     toastMessage,
-    navigateCancel: () => navigate(ROUTES.COMPANY_DATA),
+    importSuccess,
+    resetForm,
+    handleAskChatbot,
+    navigateCancel: () => resetForm(),
   };
 }

@@ -35,6 +35,9 @@ export function ImportDataPage() {
     setIsConfirmOpen,
     handleDownloadTemplate,
     navigateCancel,
+    importSuccess,
+    resetForm,
+    handleAskChatbot,
   } = useImportDataPage();
 
   useEffect(() => {
@@ -52,7 +55,7 @@ export function ImportDataPage() {
       <header className="import-data-header">
         <h1 className="import-data-header__title">Add data</h1>
         <p className="import-data-header__sub">
-          Upload a CSV file. The chatbot can use it right after the import.
+          Upload a CSV file for one dataset. The chatbot answers questions from your data right after the import.
         </p>
       </header>
 
@@ -102,39 +105,75 @@ export function ImportDataPage() {
 
             <ImportModeSelect value={mode} onChange={setMode} />
 
-            <ImportPreviewTable
-              hasFile={Boolean(file && !clientFileError)}
-              isLoading={isPreviewLoading}
-              preview={preview}
-            />
-
-            <ImportValidationSummary
-              preview={preview}
-              datasetKey={selectedDatasetKey}
-            />
-
-            {displayedError && (
-              <div className="import-error-banner" role="alert">
-                {displayedError}
+            {importSuccess ? (
+              <div className="import-success-box" role="status" data-testid="import-success-box">
+                <p className="import-success-message">
+                  {importSuccess.datasetLabel}: {importSuccess.saved} rows saved, {importSuccess.skipped} skipped.
+                </p>
+                <div className="import-success-actions">
+                  <Button
+                    type="button"
+                    className="import-btn-primary"
+                    onClick={() => {
+                      resetForm();
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                  >
+                    Upload another file
+                  </Button>
+                  <Button
+                    type="button"
+                    className="import-btn-chat"
+                    onClick={handleAskChatbot}
+                  >
+                    Ask the chatbot
+                  </Button>
+                </div>
               </div>
-            )}
+            ) : (
+              <>
+                <ImportPreviewTable
+                  hasFile={Boolean(file && !clientFileError)}
+                  isLoading={isPreviewLoading}
+                  preview={preview}
+                />
 
-            <div className="import-actions-row">
-              <Button
-                type="submit"
-                className="import-btn-primary"
-                disabled={isImportDisabled}
-              >
-                {isImportPending ? 'Importing...' : 'Import data'}
-              </Button>
-              <Button
-                type="button"
-                className="import-btn-cancel"
-                onClick={navigateCancel}
-              >
-                Cancel
-              </Button>
-            </div>
+                <ImportValidationSummary
+                  preview={preview}
+                  datasetKey={selectedDatasetKey}
+                />
+
+                {displayedError && (
+                  <div className="import-error-banner" role="alert">
+                    {displayedError}
+                  </div>
+                )}
+
+                <div className="import-actions-row">
+                  <Button
+                    type="submit"
+                    className="import-btn-primary"
+                    disabled={isImportDisabled}
+                  >
+                    {isImportPending ? 'Importing...' : 'Import data'}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="import-btn-cancel"
+                    onClick={() => {
+                      navigateCancel();
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            )}
           </form>
         </section>
 

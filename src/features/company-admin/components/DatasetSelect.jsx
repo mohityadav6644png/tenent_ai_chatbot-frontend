@@ -16,6 +16,9 @@ export function DatasetSelect({ datasets = [], value, onChange }) {
           </option>
         ))}
       </select>
+      <p className="import-dataset-help-text">
+        Each file belongs to your company only. Other companies never see it.
+      </p>
     </div>
   );
 }

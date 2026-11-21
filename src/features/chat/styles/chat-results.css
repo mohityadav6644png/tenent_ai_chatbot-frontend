@@ -11,16 +11,8 @@
 .result-table tbody tr:last-child td { border-bottom: 0; }
 .result-table__best td { font-weight: 700; }
 .result-table__numeric { text-align: right; font-variant-numeric: tabular-nums; }
-.answer-chart { width: var(--conversation-chart-width); flex: 0 0 var(--conversation-chart-width); padding-left: var(--space-chat-8); border-left: 1px solid var(--conversation-row-border); }
-.answer-chart__title { margin: 0 0 var(--space-chat-4); color: var(--conversation-muted); font-size: 12px; }
-.answer-chart__bars { display: flex; height: calc(var(--conversation-chart-height) + var(--space-chat-11)); align-items: flex-end; gap: var(--space-chat-4); overflow-x: auto; }
-.answer-chart__item { display: flex; min-width: var(--conversation-chart-item-width); height: 100%; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; gap: var(--space-chat-2); }
-.answer-chart__bar { width: 100%; height: var(--conversation-chart-height); max-width: var(--space-chat-14); transform: scaleY(var(--bar-scale)); transform-origin: bottom; border-radius: var(--radius-chart-top); background: var(--conversation-teal-light); }
-.answer-chart__bar.is-largest { background: var(--conversation-teal); }
-.answer-chart__label { max-width: 100%; overflow: hidden; color: var(--conversation-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .answer-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-chat-6); }
 .answer-footer > span { color: var(--conversation-muted); font-size: 12px; }
-.answer-actions { display: flex; flex-wrap: wrap; gap: var(--space-chat-4); }
 .answer-action { min-height: var(--space-chat-16); border: 1px solid var(--conversation-input-border); border-radius: var(--radius-conversation); color: var(--conversation-text); background: var(--conversation-white); font-size: 13px; font-weight: 500; }
 .answer-action:hover:not(:disabled) { background: var(--conversation-page); }
 .answer-card--refused { border-color: var(--chat-refused-border); background: var(--chat-refused-bg); }
@@ -29,7 +21,6 @@
 .answer-error { display: grid; justify-items: start; gap: var(--space-chat-6); color: var(--color-danger); }
 @media (max-width: 900px) {
   .answer-result-row { flex-direction: column; }
-  .answer-chart { width: 100%; flex-basis: auto; padding: var(--space-chat-6) 0 0; border-top: 1px solid var(--conversation-row-border); border-left: 0; }
 }
 @media (max-width: 520px) {
   .answer-card { padding: var(--space-chat-7); }

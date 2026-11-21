@@ -14,5 +14,10 @@ export const ROUTES = Object.freeze({
   REPORTS: '/reports',
   REPORTS_NEW: '/reports/new',
   COMPANY_DATA: '/admin/company-data',
+  COMPANY_DATA_NEW: '/admin/company-data/new',
+  COMPANY_DATA_EDIT: '/admin/company-data/:fileId/edit',
   COMPANY_DATA_ADD: '/admin/company-data/add',
+  COMPANY_DATA_RECORDS: '/admin/company-data/records',
+  COMPANY_DATA_LEGACY_RECORDS: '/admin/company-data/legacy/records',
+  COMPANY_DATA_LEGACY_DATASETS: '/admin/company-data/legacy/datasets',
 });

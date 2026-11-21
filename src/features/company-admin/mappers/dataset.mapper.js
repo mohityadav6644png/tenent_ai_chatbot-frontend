@@ -8,6 +8,11 @@ export function mapDataset(raw) {
     lastUpdated: raw.last_updated || null,
     status: raw.status || 'ready',
     requiredColumns: Array.isArray(raw.required_columns) ? raw.required_columns : [],
+    privateColumns: Array.isArray(raw.private_columns)
+      ? raw.private_columns
+      : Array.isArray(raw.non_queryable_columns)
+      ? raw.non_queryable_columns
+      : [],
   };
 }
 

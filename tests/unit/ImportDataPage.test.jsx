@@ -324,7 +324,7 @@ describe('ImportDataPage', () => {
     });
   });
 
-  it('successful import navigates to /admin/company-data with toast state', async () => {
+  it('successful import displays success box with count and action buttons', async () => {
     renderImportDataPage();
 
     await screen.findByText('Orders need these columns in the first row of your file.');
@@ -334,7 +334,7 @@ describe('ImportDataPage', () => {
     await screen.findByText(/9,860 rows/);
     fireEvent.click(screen.getByRole('button', { name: 'Import data' }));
 
-    expect(await screen.findByTestId('company-data-home')).toBeInTheDocument();
+    expect(await screen.findByTestId('import-success-box')).toBeInTheDocument();
   });
 
   it('friendly error mapping for 403, 409, 413, and 429', async () => {

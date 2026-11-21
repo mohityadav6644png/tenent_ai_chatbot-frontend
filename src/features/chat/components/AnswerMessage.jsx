@@ -1,6 +1,4 @@
 import { Button } from '../../../shared/components/Button.jsx';
-import { AnswerActions } from './AnswerActions.jsx';
-import { ChartView } from './ChartView.jsx';
 import { ResultTable } from './ResultTable.jsx';
 
 function normalizeAnswer(answer) {
@@ -62,11 +60,9 @@ export function AnswerMessage({
             {answer.detail && <p className="answer-detail">{answer.detail}</p>}
             <div className="answer-result-row">
               <ResultTable {...answer.table} />
-              <ChartView chart={answer.chart} />
             </div>
             <footer className="answer-footer">
               <span>{footerText(answer.footer || {}, rows)}</span>
-              <AnswerActions columns={columns} rows={rows} messageId={messageId} />
             </footer>
           </>
         )}

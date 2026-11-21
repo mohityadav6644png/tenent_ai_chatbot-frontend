@@ -1,3 +1,13 @@
 export { CompanyAdminPage } from './pages/CompanyAdminPage.jsx';
 export { InviteUserPage } from './pages/InviteUserPage.jsx';
 export { UsersPage } from './pages/UsersPage.jsx';
+export { CompanyFilesPage } from './pages/CompanyFilesPage.jsx';
+export { AddFilePage } from './pages/AddFilePage.jsx';
+export { EditFilePage } from './pages/EditFilePage.jsx';
+export { useCompanyFiles } from './hooks/useCompanyFiles.js';
+export { useCompanyFile } from './hooks/useCompanyFile.js';
+export { usePreviewFile } from './hooks/usePreviewFile.js';
+export { useCreateFile } from './hooks/useCreateFile.js';
+export { useUpdateFile } from './hooks/useUpdateFile.js';
+export { useReplaceFile } from './hooks/useReplaceFile.js';
+export { useDeleteFile } from './hooks/useDeleteFile.js';

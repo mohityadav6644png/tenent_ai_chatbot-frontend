@@ -28,6 +28,9 @@ const ERROR_MESSAGES = Object.freeze({
   UNAUTHENTICATED: 'Your session has expired. Please sign in again.',
   NOT_FOUND: 'The requested resource was not found.',
   PAYLOAD_TOO_LARGE: 'File size exceeds the server limit. Please upload a smaller file.',
+  FILE_EXISTS: 'A file with this name already exists.',
+  FILE_LIMIT_REACHED: 'You have reached the maximum number of files allowed for your company.',
+  INVALID_FILE: 'The uploaded file could not be processed.',
 });
 
 const CHAT_ERROR_MESSAGES = Object.freeze({
@@ -50,6 +53,18 @@ const CHAT_ERROR_MESSAGES = Object.freeze({
 export function mapApiError(error) {
   if (error?.code && Object.hasOwn(ERROR_MESSAGES, error.code)) {
     return ERROR_MESSAGES[error.code];
+  }
+  if (error?.status === 413) {
+    return ERROR_MESSAGES.PAYLOAD_TOO_LARGE;
+  }
+  if (error?.status === 429) {
+    return ERROR_MESSAGES.RATE_LIMITED;
+  }
+  if (error?.status === 403) {
+    return ERROR_MESSAGES.FORBIDDEN;
+  }
+  if (error?.status === 422) {
+    return ERROR_MESSAGES.VALIDATION_ERROR;
   }
   if (error?.status === 401) {
     return ERROR_MESSAGES.AUTH_UNAUTHORIZED;

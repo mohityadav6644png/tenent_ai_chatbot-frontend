@@ -825,98 +825,33 @@
         }
       }
     },
-    "/v1/feedback": {
+    "/v1/chatbot/ask": {
       "post": {
         "tags": [
-          "Chat",
-          "Chat"
+          "Chatbot",
+          "Chatbot"
         ],
-        "summary": "Submit Feedback",
-        "operationId": "submit_feedback_v1_feedback_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-CSRF-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Csrf-Token"
-            }
-          },
-          {
-            "name": "csrf_token",
-            "in": "cookie",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Csrf Token"
-            }
-          },
-          {
-            "name": "session",
-            "in": "cookie",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Session"
-            }
-          },
-          {
-            "name": "access_token",
-            "in": "cookie",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Access Token"
-            }
-          }
-        ],
+        "summary": "Ask Chatbot",
+        "description": "NLP Question Answering with Two-Tier Tenant Caching:\n1. Extract company_id from authenticated user's JWT.\n2. Normalize & hash the question to build a tenant-scoped cache key (namespace='chat_answer').\n3. Return cached response if present (cached: True).\n4. Compute/query MongoDB, cache the result with a 300s TTL, and return (cached: False).",
+        "operationId": "ask_chatbot_v1_chatbot_ask_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FeedbackRequest"
+                "$ref": "#/components/schemas/ChatbotAskRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
-          "204": {
-            "description": "Successful Response"
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -928,7 +863,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/users": {
@@ -2600,23 +2540,63 @@
         }
       }
     },
-    "/api/v1/company/data/insert": {
+    "/v1/company/data/insert": {
       "post": {
         "tags": [
-          "Company"
+          "Company data",
+          "Company data"
         ],
         "summary": "Manual Text Data Insertion",
-        "description": "Manual Text Data Insertion:\n- Accepts title and content in JSON body.\n- Validates company_admin role in the JWT token.\n- Stitches tenant company_id exclusively from JWT claims (ignores any frontend payload).\n- Inserts into MongoDB company_records collection.\n- Returns success message and inserted record ID.",
-        "operationId": "insert_manual_data_api_v1_company_data_insert_post",
+        "description": "Manual Text Data Insertion:\n- Accepts title and content in JSON body.\n- Validates company_admin role in the JWT token.\n- Stitches tenant company_id exclusively from TenantContext.\n- Stitches created_by from TenantContext user_id.\n- Inserts into MongoDB company_records collection.\n- Returns success message and inserted record ID.",
+        "operationId": "insert_manual_data_v1_company_data_insert_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CompanyDataInsertRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -2639,27 +2619,1818 @@
               }
             }
           }
-        },
+        }
+      }
+    },
+    "/v1/company/import-csv-data": {
+      "post": {
+        "tags": [
+          "Company data",
+          "Company data"
+        ],
+        "summary": "CSV File Import & Column Mapping",
+        "description": "CSV File Import & Column Mapping:\n- Accepts an uploaded CSV file.\n- Parses byte stream using standard CSV parser without pandas.\n- Maps headers (via explicit params, column_mapping, or heuristic aliases).\n- Stretches and stamps every row with the admin's verified company_id, created_by, and UTC timestamp.\n- Executes bulk insert into MongoDB company_records collection in batches of 1,000.\n- Returns total count of successfully imported records.",
+        "operationId": "import_csv_data_v1_company_import_csv_data_post",
         "security": [
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_csv_data_v1_company_import_csv_data_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCSVImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/import-csv-auto": {
+      "post": {
+        "tags": [
+          "Company data",
+          "Company data"
+        ],
+        "summary": "CSV File Import with Smart Column Auto-Detection",
+        "description": "Import CSV with smart column auto-detection using pandas.\n- Verified company_admin role from JWT claims.\n- Isolates records by company_id extracted securely from JWT claims.\n- Parses CSV into pandas DataFrame.\n- Auto-detects title & content columns or validates user-supplied columns.\n- Bulk inserts records into MongoDB company_records collection.",
+        "operationId": "import_csv_auto_v1_company_import_csv_auto_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_csv_auto_v1_company_import_csv_auto_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCSVAutoImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/datasets": {
+      "get": {
+        "tags": [
+          "Company data",
+          "Company data"
+        ],
+        "summary": "List Structured Datasets",
+        "description": "List Structured Datasets:\n- Returns catalog of available datasets with record count, status, last updated, and required columns.",
+        "operationId": "list_datasets_v1_company_datasets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetsListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/datasets/{dataset}/template": {
+      "get": {
+        "tags": [
+          "Company data",
+          "Company data"
+        ],
+        "summary": "Download Dataset CSV Template",
+        "description": "Download Dataset CSV Template:\n- Returns a CSV file containing only the header row for the given dataset.",
+        "operationId": "get_dataset_template_v1_company_datasets__dataset__template_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/datasets/{dataset}/imports/preview": {
+      "post": {
+        "tags": [
+          "Company data",
+          "Company data"
+        ],
+        "summary": "Preview Dataset Import",
+        "description": "Preview Dataset Import:\n- Validates file without writing anything to the database.\n- Returns total_rows, valid_rows, invalid_rows, missing_columns, unknown_columns, sample_rows, and errors.",
+        "operationId": "preview_dataset_import_v1_company_datasets__dataset__imports_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_preview_dataset_import_v1_company_datasets__dataset__imports_preview_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/datasets/{dataset}/imports": {
+      "post": {
+        "tags": [
+          "Company data",
+          "Company data"
+        ],
+        "summary": "Execute Dataset Import",
+        "description": "Execute Dataset Import:\n- Ingests structured business records via 'upsert' or 'replace'.\n- Enforces concurrency guard, rate limiting, and cache invalidation.",
+        "operationId": "execute_dataset_import_v1_company_datasets__dataset__imports_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_execute_dataset_import_v1_company_datasets__dataset__imports_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDatasetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/files": {
+      "get": {
+        "tags": [
+          "Company files",
+          "Company files"
+        ],
+        "summary": "List Company Files",
+        "description": "List all company files and aggregate summary.",
+        "operationId": "list_company_files_v1_company_files_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFilesListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Company files",
+          "Company files"
+        ],
+        "summary": "Create Company File",
+        "description": "Create and ingest a new company file.",
+        "operationId": "create_company_file_v1_company_files_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "csrf_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Csrf Token"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_company_file_v1_company_files_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCompanyFileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/files/preview": {
+      "post": {
+        "tags": [
+          "Company files",
+          "Company files"
+        ],
+        "summary": "Preview Company File",
+        "description": "Preview a CSV file without persisting data.",
+        "operationId": "preview_company_file_v1_company_files_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "csrf_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Csrf Token"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_preview_company_file_v1_company_files_preview_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFilePreviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/files/{id}": {
+      "get": {
+        "tags": [
+          "Company files",
+          "Company files"
+        ],
+        "summary": "Get Company File",
+        "description": "Get detail and column configuration of a company file.",
+        "operationId": "get_company_file_v1_company_files__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFileDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Company files",
+          "Company files"
+        ],
+        "summary": "Patch Company File",
+        "description": "Update file description, column meanings, or hidden flags. Modifies no rows.",
+        "operationId": "patch_company_file_v1_company_files__id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "csrf_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Csrf Token"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchCompanyFileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFileDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Company files",
+          "Company files"
+        ],
+        "summary": "Delete Company File",
+        "description": "Delete a company file and all its associated rows.",
+        "operationId": "delete_company_file_v1_company_files__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "csrf_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Csrf Token"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/company/files/{id}/upload": {
+      "post": {
+        "tags": [
+          "Company files",
+          "Company files"
+        ],
+        "summary": "Upload Company File Rows",
+        "description": "Upload new CSV data for an existing company file (replace or append mode).",
+        "operationId": "upload_company_file_rows_v1_company_files__id__upload_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "csrf_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Csrf Token"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_company_file_rows_v1_company_files__id__upload_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadCompanyFileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/company/data/insert": {
+      "post": {
+        "tags": [
+          "Company data"
+        ],
+        "summary": "Manual Text Data Insertion",
+        "description": "Manual Text Data Insertion:\n- Accepts title and content in JSON body.\n- Validates company_admin role in the JWT token.\n- Stitches tenant company_id exclusively from TenantContext.\n- Stitches created_by from TenantContext user_id.\n- Inserts into MongoDB company_records collection.\n- Returns success message and inserted record ID.",
+        "operationId": "insert_manual_data_api_v1_company_data_insert_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyDataInsertRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDataInsertResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/company/import-csv-data": {
       "post": {
         "tags": [
-          "Company"
+          "Company data"
         ],
         "summary": "CSV File Import & Column Mapping",
-        "description": "CSV File Import & Column Mapping:\n- Accepts an uploaded CSV file.\n- Parses byte stream using pandas.\n- Maps headers (e.g. 'Document Title' -> 'title', 'Body Content' -> 'content').\n- Stretches and stamps every row with the admin's verified company_id and UTC timestamp.\n- Executes bulk insert into MongoDB company_records collection.\n- Returns total count of successfully imported records.",
+        "description": "CSV File Import & Column Mapping:\n- Accepts an uploaded CSV file.\n- Parses byte stream using standard CSV parser without pandas.\n- Maps headers (via explicit params, column_mapping, or heuristic aliases).\n- Stretches and stamps every row with the admin's verified company_id, created_by, and UTC timestamp.\n- Executes bulk insert into MongoDB company_records collection in batches of 1,000.\n- Returns total count of successfully imported records.",
         "operationId": "import_csv_data_api_v1_company_import_csv_data_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/Body_import_csv_data_api_v1_company_import_csv_data_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCSVImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/company/import-csv-auto": {
+      "post": {
+        "tags": [
+          "Company data"
+        ],
+        "summary": "CSV File Import with Smart Column Auto-Detection",
+        "description": "Import CSV with smart column auto-detection using pandas.\n- Verified company_admin role from JWT claims.\n- Isolates records by company_id extracted securely from JWT claims.\n- Parses CSV into pandas DataFrame.\n- Auto-detects title & content columns or validates user-supplied columns.\n- Bulk inserts records into MongoDB company_records collection.",
+        "operationId": "import_csv_auto_api_v1_company_import_csv_auto_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_csv_auto_api_v1_company_import_csv_auto_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCSVAutoImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/company/datasets": {
+      "get": {
+        "tags": [
+          "Company data"
+        ],
+        "summary": "List Structured Datasets",
+        "description": "List Structured Datasets:\n- Returns catalog of available datasets with record count, status, last updated, and required columns.",
+        "operationId": "list_datasets_api_v1_company_datasets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetsListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/company/datasets/{dataset}/template": {
+      "get": {
+        "tags": [
+          "Company data"
+        ],
+        "summary": "Download Dataset CSV Template",
+        "description": "Download Dataset CSV Template:\n- Returns a CSV file containing only the header row for the given dataset.",
+        "operationId": "get_dataset_template_api_v1_company_datasets__dataset__template_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/company/datasets/{dataset}/imports/preview": {
+      "post": {
+        "tags": [
+          "Company data"
+        ],
+        "summary": "Preview Dataset Import",
+        "description": "Preview Dataset Import:\n- Validates file without writing anything to the database.\n- Returns total_rows, valid_rows, invalid_rows, missing_columns, unknown_columns, sample_rows, and errors.",
+        "operationId": "preview_dataset_import_api_v1_company_datasets__dataset__imports_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_preview_dataset_import_api_v1_company_datasets__dataset__imports_preview_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/company/datasets/{dataset}/imports": {
+      "post": {
+        "tags": [
+          "Company data"
+        ],
+        "summary": "Execute Dataset Import",
+        "description": "Execute Dataset Import:\n- Ingests structured business records via 'upsert' or 'replace'.\n- Enforces concurrency guard, rate limiting, and cache invalidation.",
+        "operationId": "execute_dataset_import_api_v1_company_datasets__dataset__imports_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset"
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_execute_dataset_import_api_v1_company_datasets__dataset__imports_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDatasetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chatbot/ask": {
+      "post": {
+        "tags": [
+          "Chatbot"
+        ],
+        "summary": "Ask Chatbot",
+        "description": "NLP Question Answering with Two-Tier Tenant Caching:\n1. Extract company_id from authenticated user's JWT.\n2. Normalize & hash the question to build a tenant-scoped cache key (namespace='chat_answer').\n3. Return cached response if present (cached: True).\n4. Compute/query MongoDB, cache the result with a 300s TTL, and return (cached: False).",
+        "operationId": "ask_chatbot_api_v1_chatbot_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatbotAskRequest"
               }
             }
           },
@@ -2670,9 +4441,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanyCSVImportResponse"
-                }
+                "schema": {}
               }
             }
           },
@@ -2795,6 +4564,145 @@
         ],
         "title": "AuditListResponse"
       },
+      "Body_create_company_file_v1_company_files_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "meta": {
+            "type": "string",
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "meta"
+        ],
+        "title": "Body_create_company_file_v1_company_files_post"
+      },
+      "Body_execute_dataset_import_api_v1_company_datasets__dataset__imports_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Uploaded CSV file"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "Import mode: 'upsert' or 'replace'",
+            "default": "upsert"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_execute_dataset_import_api_v1_company_datasets__dataset__imports_post"
+      },
+      "Body_execute_dataset_import_v1_company_datasets__dataset__imports_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Uploaded CSV file"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "Import mode: 'upsert' or 'replace'",
+            "default": "upsert"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_execute_dataset_import_v1_company_datasets__dataset__imports_post"
+      },
+      "Body_import_csv_auto_api_v1_company_import_csv_auto_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Uploaded CSV file"
+          },
+          "title_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Column",
+            "description": "Optional title column name or 'auto-detect'"
+          },
+          "content_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Column",
+            "description": "Optional content column name or 'auto-detect'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_csv_auto_api_v1_company_import_csv_auto_post"
+      },
+      "Body_import_csv_auto_v1_company_import_csv_auto_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Uploaded CSV file"
+          },
+          "title_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Column",
+            "description": "Optional title column name or 'auto-detect'"
+          },
+          "content_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Column",
+            "description": "Optional content column name or 'auto-detect'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_csv_auto_v1_company_import_csv_auto_post"
+      },
       "Body_import_csv_data_api_v1_company_import_csv_data_post": {
         "properties": {
           "file": {
@@ -2802,6 +4710,30 @@
             "contentMediaType": "application/octet-stream",
             "title": "File",
             "description": "Uploaded CSV file"
+          },
+          "title_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Column",
+            "description": "Optional title column name"
+          },
+          "content_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Column",
+            "description": "Optional content column name"
           },
           "column_mapping": {
             "anyOf": [
@@ -2821,6 +4753,115 @@
           "file"
         ],
         "title": "Body_import_csv_data_api_v1_company_import_csv_data_post"
+      },
+      "Body_import_csv_data_v1_company_import_csv_data_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Uploaded CSV file"
+          },
+          "title_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Column",
+            "description": "Optional title column name"
+          },
+          "content_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Column",
+            "description": "Optional content column name"
+          },
+          "column_mapping": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column Mapping",
+            "description": "Optional custom column mapping JSON (e.g. {'MyCol': 'title'})"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_csv_data_v1_company_import_csv_data_post"
+      },
+      "Body_preview_company_file_v1_company_files_preview_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_preview_company_file_v1_company_files_preview_post"
+      },
+      "Body_preview_dataset_import_api_v1_company_datasets__dataset__imports_preview_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Uploaded CSV file to preview"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_preview_dataset_import_api_v1_company_datasets__dataset__imports_preview_post"
+      },
+      "Body_preview_dataset_import_v1_company_datasets__dataset__imports_preview_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Uploaded CSV file to preview"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_preview_dataset_import_v1_company_datasets__dataset__imports_preview_post"
+      },
+      "Body_upload_company_file_rows_v1_company_files__id__upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_company_file_rows_v1_company_files__id__upload_post"
       },
       "ChatAnswerPayload": {
         "properties": {
@@ -2987,6 +5028,17 @@
               "miss"
             ],
             "title": "Cache"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
           }
         },
         "type": "object",
@@ -3089,12 +5141,134 @@
         ],
         "title": "ChatQueryResponse"
       },
+      "ChatbotAskRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Question",
+            "description": "Natural language question"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id",
+            "description": "Optional existing conversation ID"
+          },
+          "history": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "History",
+            "description": "Prior conversation messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "ChatbotAskRequest"
+      },
+      "CompanyCSVAutoImportResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "CSV data imported successfully"
+          },
+          "total_records": {
+            "type": "integer",
+            "title": "Total Records"
+          },
+          "total_records_imported": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Records Imported"
+          },
+          "title_column": {
+            "type": "string",
+            "title": "Title Column"
+          },
+          "content_column": {
+            "type": "string",
+            "title": "Content Column"
+          },
+          "mapped_columns": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mapped Columns"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_records",
+          "title_column",
+          "content_column"
+        ],
+        "title": "CompanyCSVAutoImportResponse"
+      },
       "CompanyCSVImportResponse": {
         "properties": {
           "message": {
             "type": "string",
             "title": "Message",
             "default": "CSV data imported successfully"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "default": 0
+          },
+          "import_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Id"
           },
           "total_records_imported": {
             "type": "integer",
@@ -3138,12 +5312,14 @@
         "properties": {
           "title": {
             "type": "string",
+            "maxLength": 200,
             "minLength": 1,
             "title": "Title",
             "description": "Title of the document or record"
           },
           "content": {
             "type": "string",
+            "maxLength": 20000,
             "minLength": 1,
             "title": "Content",
             "description": "Content of the document or record"
@@ -3202,6 +5378,260 @@
         ],
         "title": "CompanyDataInsertResponse"
       },
+      "CompanyFileColumnMeta": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "meaning": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meaning"
+          },
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "CompanyFileColumnMeta"
+      },
+      "CompanyFileDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "upload_mode": {
+            "type": "string",
+            "title": "Upload Mode"
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/FileDetailColumnResponse"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "status",
+          "upload_mode",
+          "row_count",
+          "columns",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CompanyFileDetailResponse"
+      },
+      "CompanyFileListItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "rows": {
+            "type": "integer",
+            "title": "Rows"
+          },
+          "columns_count": {
+            "type": "integer",
+            "title": "Columns Count"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "upload_mode": {
+            "type": "string",
+            "title": "Upload Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "rows",
+          "columns_count",
+          "updated_at",
+          "status",
+          "upload_mode"
+        ],
+        "title": "CompanyFileListItem"
+      },
+      "CompanyFilePreviewResponse": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "total_rows": {
+            "type": "integer",
+            "title": "Total Rows"
+          },
+          "valid_rows": {
+            "type": "integer",
+            "title": "Valid Rows"
+          },
+          "invalid_rows": {
+            "type": "integer",
+            "title": "Invalid Rows"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewColumnResponse"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "sample_rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sample Rows"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewError"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/PreviewLimits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "total_rows",
+          "valid_rows",
+          "invalid_rows",
+          "columns",
+          "sample_rows",
+          "errors",
+          "limits"
+        ],
+        "title": "CompanyFilePreviewResponse"
+      },
+      "CompanyFilesListResponse": {
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/CompanyFilesSummary"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyFileListItem"
+            },
+            "type": "array",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "files"
+        ],
+        "title": "CompanyFilesListResponse"
+      },
+      "CompanyFilesSummary": {
+        "properties": {
+          "files": {
+            "type": "integer",
+            "title": "Files"
+          },
+          "total_rows": {
+            "type": "integer",
+            "title": "Total Rows"
+          },
+          "last_upload": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Upload"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files",
+          "total_rows",
+          "limit"
+        ],
+        "title": "CompanyFilesSummary"
+      },
       "ConversationItem": {
         "properties": {
           "id": {
@@ -3236,23 +5666,142 @@
         ],
         "title": "ConversationsListResponse"
       },
-      "FeedbackRequest": {
+      "CreateCompanyFileResponse": {
         "properties": {
-          "message_id": {
+          "id": {
             "type": "string",
-            "title": "Message Id"
+            "title": "Id"
           },
-          "helpful": {
-            "type": "boolean",
-            "title": "Helpful"
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
           }
         },
         "type": "object",
         "required": [
-          "message_id",
-          "helpful"
+          "id",
+          "status",
+          "inserted",
+          "skipped"
         ],
-        "title": "FeedbackRequest"
+        "title": "CreateCompanyFileResponse"
+      },
+      "DatasetItemResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "record_label": {
+            "type": "string",
+            "title": "Record Label",
+            "default": "record"
+          },
+          "records": {
+            "type": "integer",
+            "title": "Records",
+            "default": 0
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ready"
+          },
+          "required_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Columns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "DatasetItemResponse"
+      },
+      "DatasetsListResponse": {
+        "properties": {
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetItemResponse"
+            },
+            "type": "array",
+            "title": "Datasets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "datasets"
+        ],
+        "title": "DatasetsListResponse"
+      },
+      "FileDetailColumnResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "example": {
+            "title": "Example"
+          },
+          "meaning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meaning"
+          },
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "type"
+        ],
+        "title": "FileDetailColumnResponse"
       },
       "ForgotPasswordRequest": {
         "properties": {
@@ -3333,6 +5882,139 @@
           "checked_at"
         ],
         "title": "HealthComponent"
+      },
+      "ImportDatasetResponse": {
+        "properties": {
+          "import_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Id"
+          },
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted",
+            "default": 0
+          },
+          "updated": {
+            "type": "integer",
+            "title": "Updated",
+            "default": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "completed"
+          }
+        },
+        "type": "object",
+        "title": "ImportDatasetResponse"
+      },
+      "ImportPreviewError": {
+        "properties": {
+          "row": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row"
+          },
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "title": "ImportPreviewError"
+      },
+      "ImportPreviewResponse": {
+        "properties": {
+          "total_rows": {
+            "type": "integer",
+            "title": "Total Rows",
+            "default": 0
+          },
+          "valid_rows": {
+            "type": "integer",
+            "title": "Valid Rows",
+            "default": 0
+          },
+          "invalid_rows": {
+            "type": "integer",
+            "title": "Invalid Rows",
+            "default": 0
+          },
+          "required_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Columns"
+          },
+          "missing_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Columns"
+          },
+          "unknown_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unknown Columns"
+          },
+          "sample_rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sample Rows"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ImportPreviewError"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "title": "ImportPreviewResponse"
       },
       "InternalHealthResponse": {
         "properties": {
@@ -3579,6 +6261,152 @@
           "message"
         ],
         "title": "MessageResponse"
+      },
+      "PatchCompanyFileRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "upload_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(replace|append)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Mode"
+          },
+          "columns": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CompanyFileColumnMeta"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns"
+          }
+        },
+        "type": "object",
+        "title": "PatchCompanyFileRequest"
+      },
+      "PreviewColumnResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "example": {
+            "title": "Example"
+          },
+          "suggested_hidden": {
+            "type": "boolean",
+            "title": "Suggested Hidden",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "type"
+        ],
+        "title": "PreviewColumnResponse"
+      },
+      "PreviewError": {
+        "properties": {
+          "row": {
+            "type": "integer",
+            "title": "Row"
+          },
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "row",
+          "reason"
+        ],
+        "title": "PreviewError"
+      },
+      "PreviewLimits": {
+        "properties": {
+          "max_files": {
+            "type": "integer",
+            "title": "Max Files"
+          },
+          "max_mb": {
+            "type": "integer",
+            "title": "Max Mb"
+          },
+          "max_rows": {
+            "type": "integer",
+            "title": "Max Rows"
+          },
+          "max_columns": {
+            "type": "integer",
+            "title": "Max Columns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "max_files",
+          "max_mb",
+          "max_rows",
+          "max_columns"
+        ],
+        "title": "PreviewLimits"
       },
       "ReadinessResponse": {
         "properties": {
@@ -4252,6 +7080,37 @@
           "refresh_token"
         ],
         "title": "TokenResponse"
+      },
+      "UploadCompanyFileResponse": {
+        "properties": {
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewError"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inserted",
+          "skipped",
+          "errors",
+          "status"
+        ],
+        "title": "UploadCompanyFileResponse"
       },
       "UserDeactivateResponse": {
         "properties": {

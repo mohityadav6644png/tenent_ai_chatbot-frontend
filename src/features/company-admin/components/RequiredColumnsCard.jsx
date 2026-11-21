@@ -13,11 +13,29 @@ export function RequiredColumnsCard({ dataset, onDownloadTemplate }) {
       </p>
 
       <div className="import-chips-container">
-        {requiredColumns.map((col) => (
-          <code key={col} className="import-column-chip">
-            {col}
-          </code>
-        ))}
+        {requiredColumns.map((col) => {
+          const colName = typeof col === 'string' ? col : col?.name;
+          const isPrivate = Boolean(
+            (typeof col === 'object' && (col?.private || col?.queryable === false)) ||
+            dataset?.privateColumns?.includes(colName) ||
+            dataset?.private_columns?.includes(colName) ||
+            dataset?.nonQueryableColumns?.includes(colName)
+          );
+
+          return (
+            <code key={colName} className="import-column-chip">
+              {colName}
+              {isPrivate && (
+                <span
+                  className="import-column-chip__private"
+                  title="Stored, but the chatbot cannot read this column."
+                >
+                  private
+                </span>
+              )}
+            </code>
+          );
+        })}
       </div>
 
       <h2 className="import-side-card__heading import-side-card__heading--tips">

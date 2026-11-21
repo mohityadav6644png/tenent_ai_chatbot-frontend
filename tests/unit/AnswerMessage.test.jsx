@@ -37,8 +37,6 @@ describe('AnswerMessage', () => {
     expect(screen.getByText('North')).toBeInTheDocument();
     expect(screen.getByText('South')).toBeInTheDocument();
     expect(screen.getByText('2 rows · answered in 1.6 s')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Download CSV' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Helpful' })).toBeInTheDocument();
   });
 
   it('formats and right-aligns numeric values', () => {
@@ -54,12 +52,5 @@ describe('AnswerMessage', () => {
     expect(toCsv([{ name: 'Value' }], [['=1+1'], ['+cmd'], ['-1'], ['@name']])).toBe(
       '"Value"\r\n"\'=1+1"\r\n"\'+cmd"\r\n"\'-1"\r\n"\'@name"',
     );
-  });
-
-  it('changes Helpful to Thanks after feedback resolves', async () => {
-    renderAnswer();
-    fireEvent.click(screen.getByRole('button', { name: 'Helpful' }));
-
-    expect(await screen.findByRole('button', { name: 'Thanks' })).toBeDisabled();
   });
 });

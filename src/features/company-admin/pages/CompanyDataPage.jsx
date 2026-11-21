@@ -19,7 +19,7 @@ export function CompanyDataPage() {
           </p>
         </div>
         <Link
-          to={ROUTES.COMPANY_DATA_ADD}
+          to={ROUTES.COMPANY_DATA}
           className="company-data-header__link"
           style={{ fontSize: '14px', color: '#0F6B73', textDecoration: 'none', fontWeight: 500 }}
         >

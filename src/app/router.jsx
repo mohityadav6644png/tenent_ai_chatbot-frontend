@@ -4,7 +4,13 @@ import { ProtectedRoute } from './guards/ProtectedRoute.jsx';
 import { RoleRoute } from './guards/RoleRoute.jsx';
 import { ForgotPasswordPage, LoginPage } from '../features/auth/index.js';
 import { ChatPage } from '../features/chat/index.js';
-import { InviteUserPage, UsersPage } from '../features/company-admin/index.js';
+import {
+  AddFilePage,
+  CompanyFilesPage,
+  EditFilePage,
+  InviteUserPage,
+  UsersPage,
+} from '../features/company-admin/index.js';
 import { CompanyDataPage } from '../features/company-admin/pages/CompanyDataPage.jsx';
 import { ImportDataPage } from '../features/company-admin/pages/ImportDataPage.jsx';
 import {
@@ -67,8 +73,13 @@ export function AppRouter() {
               <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
             </Route>
             <Route element={<RoleRoute allowedRoles={[ROLES.COMPANY_ADMIN]} />}>
-              <Route path={ROUTES.COMPANY_DATA} element={<CompanyDataPage />} />
-              <Route path={ROUTES.COMPANY_DATA_ADD} element={<ImportDataPage />} />
+              <Route path={ROUTES.COMPANY_DATA} element={<CompanyFilesPage />} />
+              <Route path={ROUTES.COMPANY_DATA_NEW} element={<AddFilePage />} />
+              <Route path="/admin/company-data/:fileId/edit" element={<EditFilePage />} />
+              <Route path={ROUTES.COMPANY_DATA_LEGACY_DATASETS} element={<ImportDataPage />} />
+              <Route path={ROUTES.COMPANY_DATA_LEGACY_RECORDS} element={<CompanyDataPage />} />
+              <Route path={ROUTES.COMPANY_DATA_ADD} element={<Navigate to={ROUTES.COMPANY_DATA} replace />} />
+              <Route path={ROUTES.COMPANY_DATA_RECORDS} element={<Navigate to={ROUTES.COMPANY_DATA_LEGACY_RECORDS} replace />} />
             </Route>
           </Route>
         </Route>
