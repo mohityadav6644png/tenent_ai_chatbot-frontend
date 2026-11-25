@@ -8,7 +8,7 @@ const LOADING_STEPS = [
   'Fetching your data',
 ];
 
-function LoadingMessage() {
+function LoadingMessage({ onStop }) {
   return (
     <div className="loading-message" role="status">
       <span className="loading-spinner" aria-hidden="true" />
@@ -16,12 +16,25 @@ function LoadingMessage() {
         {LOADING_STEPS.map((step, index) => (
           <p className={index === 0 ? 'loading-message__active' : ''} key={step}>{step}</p>
         ))}
+        {onStop && (
+          <button
+            type="button"
+            className="loading-message__stop"
+            onClick={onStop}
+            aria-label="Stop query"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+              <rect x="5" y="5" width="14" height="14" rx="2" />
+            </svg>
+            Stop
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-export function MessageList({ messages, onRetry, retryDisabled }) {
+export function MessageList({ messages, onRetry, retryDisabled, onStop }) {
   const listRef = useMessageList(messages);
 
   return (
@@ -32,7 +45,7 @@ export function MessageList({ messages, onRetry, retryDisabled }) {
       {messages.map((message) => (
         <li className={`chat-message chat-message--${message.kind}`} key={message.id}>
           {message.kind === 'user' && <UserMessage>{message.content}</UserMessage>}
-          {message.kind === 'loading' && <LoadingMessage />}
+          {message.kind === 'loading' && <LoadingMessage onStop={onStop} />}
           {message.kind === 'answer' && (
             <AnswerMessage
               answer={message.answer}

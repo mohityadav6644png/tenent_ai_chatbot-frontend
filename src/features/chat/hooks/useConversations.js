@@ -4,7 +4,7 @@ import { AuthContext } from '../../auth/AuthContext.jsx';
 function createRecord(title = 'New chat') {
   return {
     id: crypto.randomUUID(),
-    conversationId: crypto.randomUUID(),
+    conversationId: null,
     title,
     messages: [],
     updatedAt: Date.now(),
@@ -24,7 +24,10 @@ function loadStoredConversations(storageKey) {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+      return parsed.map((conv) => ({
+        ...conv,
+        messages: (conv.messages || []).filter((m) => m && m.kind !== 'loading'),
+      }));
     }
   } catch {
     // Ignore storage parse error
@@ -35,7 +38,11 @@ function loadStoredConversations(storageKey) {
 function saveStoredConversations(storageKey, convs) {
   if (!storageKey || typeof window === 'undefined') return;
   try {
-    localStorage.setItem(storageKey, JSON.stringify(convs));
+    const cleanConvs = convs.map((conv) => ({
+      ...conv,
+      messages: (conv.messages || []).filter((m) => m && m.kind !== 'loading'),
+    }));
+    localStorage.setItem(storageKey, JSON.stringify(cleanConvs));
   } catch {
     // Ignore storage error
   }

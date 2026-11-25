@@ -1,5 +1,14 @@
-import { authLoginResponseSchema, authUserSchema } from '../../../api/v1/schemas/auth.schema.js';
-import { currentUserRequest, login as loginRequest, logoutRequest } from '../../../api/v1/auth.api.js';
+import {
+  acceptInviteResponseSchema,
+  authLoginResponseSchema,
+  authUserSchema,
+} from '../../../api/v1/schemas/auth.schema.js';
+import {
+  acceptInviteRequest,
+  currentUserRequest,
+  login as loginRequest,
+  logoutRequest,
+} from '../../../api/v1/auth.api.js';
 import { clearAuthToken, setAuthToken } from '../../../api/httpClient.js';
 import {
   DEMO_USER,
@@ -36,3 +45,11 @@ export const logout = async (user) => {
     clearAuthToken();
   }
 };
+
+export async function acceptInvite(payload) {
+  const result = acceptInviteResponseSchema.parse(await acceptInviteRequest(payload));
+  if (result.access_token) {
+    setAuthToken(result.access_token);
+  }
+  return result.user;
+}

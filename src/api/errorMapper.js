@@ -35,6 +35,7 @@ const ERROR_MESSAGES = Object.freeze({
 
 const CHAT_ERROR_MESSAGES = Object.freeze({
   RATE_LIMITED: 'Too many requests. Please wait before asking again.',
+  LLM_UNAVAILABLE: 'The AI service is busy. Please try again in a moment.',
   QUERY_REFUSED: 'I can only help with your company data.',
   UNSAFE_QUERY: 'That request cannot be run safely. Try asking in a different way.',
   INVALID_CHAT_REQUEST: 'Your question could not be processed. Please try again.',

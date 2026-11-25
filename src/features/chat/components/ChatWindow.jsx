@@ -19,6 +19,7 @@ export function ChatWindow({
     submitQuestion,
     retryMessage,
     sendFollowUp,
+    stopQuery,
   } = useChatWindow({ conversation, onConversationUpdate });
 
   return (
@@ -27,6 +28,7 @@ export function ChatWindow({
         messages={messages}
         onRetry={retryMessage}
         retryDisabled={sendQuery.isPending || isRateLimited}
+        onStop={stopQuery}
       />
       <SuggestionChips
         suggestions={messages.at(-1)?.answer?.followUps}
@@ -44,6 +46,8 @@ export function ChatWindow({
           onChange={setDraft}
           onSend={(question) => void submitQuestion(question)}
           disabled={sendQuery.isPending || isRateLimited}
+          isLoading={sendQuery.isPending}
+          onStop={stopQuery}
         />
       </div>
     </section>

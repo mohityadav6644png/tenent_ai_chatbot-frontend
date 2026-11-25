@@ -59,11 +59,7 @@ describe('LoginForm', () => {
       '/forgot-password',
     );
     expect(screen.getByText('Invite-only access')).toBeInTheDocument();
-    expect(screen.getByText(/Employee demo: demo@example\.com \/ Demo123!/)).toBeInTheDocument();
-    expect(screen.getByText(/Company Admin demo: companyadmin@example\.com \/ CompanyAdmin123!/))
-      .toBeInTheDocument();
-    expect(screen.getByText(/Super Admin demo: superadmin@example\.com \/ SuperAdmin123!/))
-      .toBeInTheDocument();
+    expect(screen.queryByText(/Employee demo:/)).not.toBeInTheDocument();
   });
 
   it('accepts the development demo account without calling the backend', async () => {

@@ -1,14 +1,116 @@
 /* Company Files Styles (company-files.css) */
 
-.company-files-page {
+.connections-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 16px;
+  gap: 16px;
+  margin-top: 24px;
 }
+
+.connections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.connections-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.connections-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #4B5563;
+}
+
+.connections__badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.connections__badge--active {
+  background-color: #DDF3E8;
+  color: #14633F;
+}
+
+.connections__badge--refreshing {
+  background-color: #FCEBC4;
+  color: #6B4A00;
+}
+
+.connections__badge--needs-attention {
+  background-color: #FBE0DC;
+  color: #9B2C1F;
+}
+
+.connections__badge--suggested {
+  background-color: #EBDDF7;
+  color: #59308A;
+}
+
+.connections-box {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+
+.connections-box--danger {
+  background-color: #FBE0DC;
+  color: #9B2C1F;
+  border: 1px solid #F5C2B8;
+}
+
+.connections-box--warning {
+  background-color: #FCEBC4;
+  color: #6B4A00;
+  border: 1px solid #F5DA8B;
+}
+
+.connections-box--info {
+  background-color: #DDF3E8;
+  color: #14633F;
+  border: 1px solid #B8E6CE;
+}
+
+.connections-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.connections-form-row label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.connections-form-row select {
+  height: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #111827;
+  background-color: #FFFFFF;
+}
+
+.connections-form-row select:focus {
+  outline: 2px solid #0F6B73;
+  outline-offset: -1px;
+}
+
 
 .company-files-header {
   display: flex;

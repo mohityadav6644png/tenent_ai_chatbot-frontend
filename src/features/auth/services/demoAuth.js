@@ -8,6 +8,7 @@ export const DEMO_USER = Object.freeze({
   email: DEMO_CREDENTIALS.email,
   name: 'Demo Employee',
   role: 'employee',
+  company_name: 'Acme Traders',
 });
 
 export const DEMO_SUPER_ADMIN_CREDENTIALS = Object.freeze({

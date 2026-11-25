@@ -64,4 +64,33 @@ describe('ChatWindow', () => {
       question: 'Show sales by region',
     }));
   });
+
+  it('allows user to stop a running query with the stop button', async () => {
+    let abortSignal;
+    sendQuery.mockImplementation(({ signal } = {}) => {
+      abortSignal = signal;
+      return new Promise((_, reject) => {
+        signal?.addEventListener('abort', () => {
+          const err = new Error('The operation was aborted');
+          err.name = 'AbortError';
+          reject(err);
+        });
+      });
+    });
+
+    renderChat();
+
+    fireEvent.change(screen.getByLabelText('Ask a question about your company data'), {
+      target: { value: 'What are total sales?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send question' }));
+
+    const stopButton = await screen.findByRole('button', { name: 'Stop query' });
+    expect(stopButton).toBeInTheDocument();
+
+    fireEvent.click(stopButton);
+
+    await screen.findByText('Query stopped by user.');
+    expect(abortSignal?.aborted).toBe(true);
+  });
 });

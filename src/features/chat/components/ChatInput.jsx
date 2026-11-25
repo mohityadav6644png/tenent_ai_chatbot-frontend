@@ -1,6 +1,6 @@
 import { Button } from '../../../shared/components/Button.jsx';
 
-export function ChatInput({ value, onChange, onSend, disabled }) {
+export function ChatInput({ value, onChange, onSend, disabled, isLoading, onStop }) {
   function handleSubmit(event) {
     event.preventDefault();
     const question = value.trim();
@@ -29,16 +29,29 @@ export function ChatInput({ value, onChange, onSend, disabled }) {
           placeholder="Ask a question about your company data"
           disabled={disabled}
         />
-        <Button
-          aria-label="Send question"
-          className="chat-composer__send"
-          type="submit"
-          disabled={disabled || !value.trim()}
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24">
-            <path d="M12 19V5m-7 7 7-7 7 7" />
-          </svg>
-        </Button>
+        {isLoading && onStop ? (
+          <Button
+            aria-label="Stop generating"
+            className="chat-composer__send chat-composer__stop"
+            type="button"
+            onClick={onStop}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <rect x="7" y="7" width="10" height="10" rx="1.5" />
+            </svg>
+          </Button>
+        ) : (
+          <Button
+            aria-label="Send question"
+            className="chat-composer__send"
+            type="submit"
+            disabled={disabled || !value.trim()}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12 19V5m-7 7 7-7 7 7" />
+            </svg>
+          </Button>
+        )}
       </form>
       <p className="chat-composer__note">
         AI can make mistakes. Answers come only from your company&apos;s data.

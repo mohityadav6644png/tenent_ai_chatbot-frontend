@@ -3,6 +3,7 @@
 .answer-card { display: grid; min-width: 0; flex: 1; gap: var(--space-chat-8); padding: var(--space-chat-9) var(--space-chat-10); border: 1px solid var(--conversation-border); border-radius: var(--radius-answer-message); background: var(--conversation-white); }
 .answer-summary { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.55; }
 .answer-detail { margin: calc(-1 * var(--space-chat-5)) 0 0; color: var(--conversation-muted); font-size: 14px; }
+.answer-interpreted { font-size: 12px; color: #5B6472; margin: 0; }
 .answer-result-row { display: flex; min-width: 0; align-items: stretch; gap: var(--space-chat-10); }
 .result-table-scroll { min-width: 0; flex: 1; overflow-x: auto; border: 1px solid var(--conversation-border); border-radius: var(--radius-conversation); }
 .result-table { width: 100%; border-collapse: collapse; text-align: left; }

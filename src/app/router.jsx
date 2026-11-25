@@ -2,7 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES } from './routes.constants.js';
 import { ProtectedRoute } from './guards/ProtectedRoute.jsx';
 import { RoleRoute } from './guards/RoleRoute.jsx';
-import { ForgotPasswordPage, LoginPage } from '../features/auth/index.js';
+import { AcceptInvitePage, ForgotPasswordPage, LoginPage } from '../features/auth/index.js';
 import { ChatPage } from '../features/chat/index.js';
 import {
   AddFilePage,
@@ -32,6 +32,7 @@ export function AppRouter() {
       <Routes>
         <Route element={<AuthLayout />}>
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+          <Route path={ROUTES.ACCEPT_INVITE} element={<AcceptInvitePage />} />
           <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
         </Route>
         <Route element={<ProtectedRoute />}>
