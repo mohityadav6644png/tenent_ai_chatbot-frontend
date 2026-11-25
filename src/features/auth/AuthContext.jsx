@@ -39,6 +39,11 @@ export function AuthProvider({ children }) {
         setUser(signedInUser);
         return signedInUser;
       },
+      acceptInvite: async (payload) => {
+        const activatedUser = await authService.acceptInvite(payload);
+        setUser(activatedUser);
+        return activatedUser;
+      },
       logout: async () => {
         try {
           await authService.logout(user);

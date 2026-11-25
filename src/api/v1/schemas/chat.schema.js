@@ -25,6 +25,20 @@ export const chatAnswerSchema = z.object({
   options: z.array(z.string()).default([]),
 });
 
+export const profilePromptSchema = z.object({
+  field: z.enum(['name', 'company_name', 'interest']),
+  text: z.string(),
+  skippable: z.boolean().default(true),
+});
+
+export const multiDocAnswerMetaSchema = z.object({
+  used_multi_doc: z.boolean().default(false),
+  document_ids: z.array(z.string()).default([]),
+  source_names: z.array(z.string()).default([]),
+  join_keys_used: z.array(z.string()).default([]),
+  partial_coverage_note: z.string().nullable().optional(),
+});
+
 export const chatResponseSchema = z.object({
   status: z.enum(['success', 'clarification_needed', 'refused', 'error']),
   answer: chatAnswerSchema,
@@ -33,6 +47,7 @@ export const chatResponseSchema = z.object({
     latency_ms: z.number().nonnegative(),
     conversation_id: z.string().nullable().optional(),
     cache: z.string().optional(),
+    interpreted_question: z.string().nullable().optional(),
   }),
   error: z.object({
     code: z.string(),
@@ -42,4 +57,6 @@ export const chatResponseSchema = z.object({
   }).nullable().optional(),
   conversation_id: z.string().nullable().optional(),
   request_id: z.string().optional(),
+  profile_prompt: profilePromptSchema.nullable().optional(),
+  multidoc_meta: multiDocAnswerMetaSchema.nullable().optional(),
 });

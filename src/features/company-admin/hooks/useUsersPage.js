@@ -15,7 +15,7 @@ export function useUsersPage() {
   const [toast, setToast] = useState('');
   const companyName = typeof user?.company_name === 'string'
     ? user.company_name
-    : typeof user?.companyName === 'string' ? user.companyName : 'Acme Traders';
+    : typeof user?.companyName === 'string' ? user.companyName : 'Company';
 
   useEffect(() => {
     const message = location.state?.successToast;

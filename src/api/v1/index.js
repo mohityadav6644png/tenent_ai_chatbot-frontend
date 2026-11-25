@@ -11,3 +11,4 @@ export * from './schemas/company.schema.js';
 export * from './companyData.api.js';
 export * from './schemas/companyData.schema.js';
 export * from './companyFiles.api.js';
+export * from './connections.api.js';

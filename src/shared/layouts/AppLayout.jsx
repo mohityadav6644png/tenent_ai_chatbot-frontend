@@ -26,9 +26,7 @@ export function AppLayout() {
     pathname.startsWith(ROUTES.COMPANY_DATA)
   );
   const navItems = ROLE_NAV_ITEMS[user?.role] || ROLE_NAV_ITEMS[ROLES.EMPLOYEE];
-  const companyName = typeof user?.company_name === 'string'
-    ? user.company_name
-    : typeof user?.companyName === 'string' ? user.companyName : 'Acme Traders';
+  const companyName = user?.company_name || user?.companyName || (user?.role === ROLES.SUPER_ADMIN ? 'Platform' : 'Company');
 
   async function handleLogout() {
     await logout();
@@ -39,7 +37,7 @@ export function AppLayout() {
     <div className={`app-shell${companyAdmin ? ' app-shell--admin' : ''}`}>
       {menuOpen && <button className="chat-sidebar__backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
       <aside className={`chat-sidebar${companyAdmin ? ' chat-sidebar--admin' : ''}${menuOpen ? ' is-open' : ''}`}>
-        <div className="chat-sidebar__company">{companyAdmin ? companyName : 'Acme Traders'}</div>
+        <div className="chat-sidebar__company">{companyName}</div>
         <nav className="chat-sidebar__nav" aria-label="Main navigation">
           {navItems.map(({ label, to }) => (
             to ? (

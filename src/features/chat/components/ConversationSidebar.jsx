@@ -23,13 +23,16 @@ export function ConversationSidebar({
     navigate(ROUTES.LOGIN, { replace: true });
   }
 
+  const companyName = user?.company_name || user?.companyName || 'Company';
+  const brandInitial = companyName.trim().charAt(0).toUpperCase() || 'C';
+
   return (
     <>
       {open && <button className="conversation-backdrop" onClick={onClose} aria-label="Close menu" />}
       <aside className={`conversation-sidebar${open ? ' is-open' : ''}`}>
         <div className="conversation-brand">
-          <span className="conversation-brand__mark">A</span>
-          <span><strong>Acme Traders</strong><small>Data assistant</small></span>
+          <span className="conversation-brand__mark">{brandInitial}</span>
+          <span><strong>{companyName}</strong><small>Data assistant</small></span>
         </div>
         <Button className="new-chat-button" onClick={onNewChat}>
           <span aria-hidden="true">+</span> New chat

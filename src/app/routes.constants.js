@@ -1,6 +1,7 @@
 export const ROUTES = Object.freeze({
   HOME: '/',
   LOGIN: '/login',
+  ACCEPT_INVITE: '/accept-invite',
   FORGOT_PASSWORD: '/forgot-password',
   CHAT: '/chat',
   ADMIN_USERS: '/admin/users',

@@ -401,24 +401,6 @@ h1 {
   line-height: 1.5;
 }
 
-.login-card__demo {
-  margin: var(--space-label-gap) 0 0;
-  padding: var(--space-label-gap);
-  border-radius: var(--radius-control);
-  background: var(--color-page);
-  color: var(--color-text);
-  font-size: 0.875rem;
-  overflow-wrap: anywhere;
-}
-
-.login-card__demo p {
-  margin: 0;
-}
-
-.login-card__demo p + p {
-  margin-top: var(--space-label-gap);
-}
-
 .login-form {
   margin-top: var(--space-field-gap);
 }

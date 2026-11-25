@@ -1,7 +1,9 @@
 import { useState } from 'react';
 
 export function useConversation(initialMessages = [], initialConversationId) {
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState(() =>
+    initialMessages.filter((m) => m && m.kind !== 'loading')
+  );
   const [conversationId, setConversationId] = useState(initialConversationId);
 
   function addMessage(message) {
@@ -16,6 +18,24 @@ export function useConversation(initialMessages = [], initialConversationId) {
     );
   }
 
+  function removeLoadingMessages() {
+    setMessages((current) =>
+      current.map((item) =>
+        item.kind === 'loading'
+          ? {
+              ...item,
+              kind: 'error',
+              answer: {
+                status: 'error',
+                errorMessage: 'Query stopped by user.',
+                retryable: true,
+              },
+            }
+          : item
+      )
+    );
+  }
+
   function clearConversation(nextConversationId = crypto.randomUUID()) {
     setMessages([]);
     setConversationId(nextConversationId);
@@ -27,6 +47,7 @@ export function useConversation(initialMessages = [], initialConversationId) {
     setConversationId,
     addMessage,
     replaceMessage,
+    removeLoadingMessages,
     clearConversation,
   };
 }

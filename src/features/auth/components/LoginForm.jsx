@@ -2,11 +2,6 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes.constants.js';
 import { Button } from '../../../shared/components/Button.jsx';
 import { TextField } from '../../../shared/components/TextField.jsx';
-import {
-  DEMO_CREDENTIALS,
-  DEMO_COMPANY_ADMIN_CREDENTIALS,
-  DEMO_SUPER_ADMIN_CREDENTIALS,
-} from '../services/demoAuth.js';
 import { useLoginForm } from '../hooks/useLoginForm.js';
 
 export function LoginForm() {
@@ -27,13 +22,6 @@ export function LoginForm() {
     <section className="login-card" aria-labelledby="login-title">
       <h1 className="login-card__title" id="login-title">Sign in</h1>
       <p className="login-card__subtitle">Ask questions about your company data.</p>
-      {import.meta.env.DEV && (
-        <div className="login-card__demo">
-          <p>Employee demo: {DEMO_CREDENTIALS.email} / {DEMO_CREDENTIALS.password}</p>
-          <p>Company Admin demo: {DEMO_COMPANY_ADMIN_CREDENTIALS.email} / {DEMO_COMPANY_ADMIN_CREDENTIALS.password}</p>
-          <p>Super Admin demo: {DEMO_SUPER_ADMIN_CREDENTIALS.email} / {DEMO_SUPER_ADMIN_CREDENTIALS.password}</p>
-        </div>
-      )}
       <form className="login-form" onSubmit={handleSubmit} noValidate>
         <div className="login-form__fields">
           <TextField
