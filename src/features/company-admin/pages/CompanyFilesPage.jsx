@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../app/routes.constants.js';
 import { EmptyState } from '../../../shared/components/EmptyState.jsx';
@@ -8,6 +8,7 @@ import { useLayoutUser } from '../../../shared/hooks/useLayoutUser.js';
 import { formatNumber } from '../../../shared/utils/formatNumber.js';
 import { formatRelativeTime } from '../../../shared/utils/formatRelativeTime.js';
 import { mapApiError } from '../../../api/errorMapper.js';
+import { getCompanyFile } from '../../../api/v1/companyFiles.api.js';
 import { useCompanyFiles } from '../hooks/useCompanyFiles.js';
 import { useDeleteFile } from '../hooks/useDeleteFile.js';
 import { useReplaceFile } from '../hooks/useReplaceFile.js';
@@ -15,6 +16,7 @@ import { useConnections } from '../hooks/useConnections.js';
 import { usePreviewConnection } from '../hooks/usePreviewConnection.js';
 import { useCreateConnection } from '../hooks/useCreateConnection.js';
 import { useConnectionActions } from '../hooks/useConnectionActions.js';
+import { getScanState } from '../../../api/v1/connections.api.js';
 import '../styles/company-files.css';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -27,10 +29,10 @@ export function CompanyFilesPage() {
   const deleteMutation = useDeleteFile();
   const replaceMutation = useReplaceFile();
 
-  const { data: connsData } = useConnections();
+  const { data: connsData, refetch: refetchConns } = useConnections();
   const previewMutation = usePreviewConnection();
   const createConnMutation = useCreateConnection();
-  const { accept, dismiss, refresh, remove } = useConnectionActions();
+  const { accept, dismiss, refresh, remove, review, scan } = useConnectionActions();
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [replaceTarget, setReplaceTarget] = useState(null);
@@ -42,33 +44,163 @@ export function CompanyFilesPage() {
   const [isAddConnectionOpen, setIsAddConnectionOpen] = useState(false);
   const [deleteConnTarget, setDeleteConnTarget] = useState(null);
   const [fromFileId, setFromFileId] = useState('');
+  const [activeWhyId, setActiveWhyId] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
   const [fromCol, setFromCol] = useState('');
   const [toFileId, setToFileId] = useState('');
   const [toCol, setToCol] = useState('');
   const [previewResult, setPreviewResult] = useState(null);
   const [previewError, setPreviewError] = useState(null);
   const [createConnError, setCreateConnError] = useState(null);
+  const [extraColumns, setExtraColumns] = useState({});
 
   const summary = data?.summary || { files: 0, total_rows: 0, last_upload: null, limit: 10 };
   const files = data?.files || [];
   const connections = connsData?.connections || [];
   const isAtLimit = summary.files >= summary.limit;
 
+  const getFileColumns = (fileId) => {
+    const fObj = files.find((f) => f.id === fileId);
+    if (fObj?.columns && fObj.columns.length > 0) {
+      return fObj.columns;
+    }
+    return extraColumns[fileId] || [];
+  };
+
+  useEffect(() => {
+    if (!isAddConnectionOpen) return;
+    [fromFileId, toFileId].forEach((fid) => {
+      if (!fid) return;
+      const fObj = files.find((f) => f.id === fid);
+      if (!fObj?.columns?.length && !extraColumns[fid]) {
+        getCompanyFile(fid)
+          .then((res) => {
+            if (res?.columns) {
+              setExtraColumns((prev) => ({ ...prev, [fid]: res.columns }));
+            }
+          })
+          .catch(() => {});
+      }
+    });
+  }, [isAddConnectionOpen, fromFileId, toFileId, files, extraColumns]);
+
+  useEffect(() => {
+    if (!isAddConnectionOpen) return;
+    const leftCols = getFileColumns(fromFileId).filter((c) => !c.hidden);
+    if (leftCols.length > 0 && (!fromCol || !leftCols.some((c) => c.key === fromCol))) {
+      setFromCol(leftCols[0].key);
+    }
+    const rightCols = getFileColumns(toFileId).filter((c) => !c.hidden);
+    if (rightCols.length > 0 && (!toCol || !rightCols.some((c) => c.key === toCol))) {
+      setToCol(rightCols[0].key);
+    }
+  }, [isAddConnectionOpen, fromFileId, toFileId, extraColumns, files, fromCol, toCol]);
+
   const handleOpenAddConnection = () => {
     setIsAddConnectionOpen(true);
     const firstF = files[0] || null;
-    setFromFileId(firstF?.id || '');
-    const firstNonHiddenLeft = (firstF?.columns || []).find((c) => !c.hidden)?.key || '';
-    setFromCol(firstNonHiddenLeft);
+    const firstId = firstF?.id || '';
+    setFromFileId(firstId);
 
     const defaultRight = files.find((f) => f.id !== firstF?.id) || firstF || null;
-    setToFileId(defaultRight?.id || '');
-    const firstNonHiddenRight = (defaultRight?.columns || []).find((c) => !c.hidden)?.key || '';
+    const rightId = defaultRight?.id || '';
+    setToFileId(rightId);
+
+    const leftCols = (firstF?.columns && firstF.columns.length > 0) ? firstF.columns : (extraColumns[firstId] || []);
+    const firstNonHiddenLeft = leftCols.find((c) => !c.hidden)?.key || '';
+    setFromCol(firstNonHiddenLeft);
+
+    const rightCols = (defaultRight?.columns && defaultRight.columns.length > 0) ? defaultRight.columns : (extraColumns[rightId] || []);
+    const firstNonHiddenRight = rightCols.find((c) => !c.hidden)?.key || '';
     setToCol(firstNonHiddenRight);
 
     setPreviewResult(null);
     setPreviewError(null);
     setCreateConnError(null);
+  };
+
+  const handleScan = async () => {
+    try {
+      setIsScanning(true);
+      await scan.mutateAsync();
+      setToast('Scan started. Analyzing file relationships...');
+      const interval = setInterval(async () => {
+        try {
+          const state = await getScanState();
+          if (state?.status !== 'running') {
+            clearInterval(interval);
+            setIsScanning(false);
+            if (refetchConns) await refetchConns();
+            setToast(`Scan finished. Found ${state?.connections_suggested || 0} suggestion(s).`);
+          }
+        } catch {
+          clearInterval(interval);
+          setIsScanning(false);
+        }
+      }, 5000);
+    } catch (err) {
+      setIsScanning(false);
+      setActionError(mapApiError(err));
+    }
+  };
+
+  const getEvidenceDescription = (conn) => {
+    const descriptions = [];
+    const ev = Array.isArray(conn?.evidence)
+      ? conn.evidence
+      : Array.isArray(conn?.reason_codes)
+      ? conn.reason_codes
+      : (typeof conn?.evidence === 'object' && conn?.evidence !== null)
+      ? Object.keys(conn.evidence)
+      : [];
+    const matchPct = Math.round((conn?.match_rate || 0) * 100);
+    const rightFile = conn?.right?.file_name || 'Target file';
+    const rightKey = conn?.right?.key || 'key';
+
+    let hasNameMatch = false;
+    let hasValueMatch = false;
+    let hasUnique = false;
+    let hasLlm = false;
+
+    ev.forEach((code) => {
+      if (typeof code === 'string') {
+        if (code.includes('name_match') || code.includes('overlap') || code.includes('synonym')) {
+          hasNameMatch = true;
+        } else if (code.startsWith('containment') || code === 'value_match') {
+          hasValueMatch = true;
+        } else if (code === 'right_key_unique' || code.includes('unique')) {
+          hasUnique = true;
+        } else if (code === 'llm_approved' || code.includes('llm')) {
+          hasLlm = true;
+        }
+      }
+    });
+
+    if (hasNameMatch || ev.length === 0) {
+      descriptions.push('Column names match');
+    }
+    if (hasValueMatch || matchPct > 0) {
+      descriptions.push(`${matchPct}% of values match`);
+    }
+    if (hasUnique || conn?.right) {
+      descriptions.push(`${rightFile}.${rightKey} has no duplicates`);
+    }
+    if (hasLlm || conn?.origin === 'auto') {
+      descriptions.push('Reviewed by AI from names only');
+    }
+
+    return descriptions;
+  };
+
+  const getConfidenceBadge = (confidence, label) => {
+    const l = (label || (confidence >= 0.8 ? 'high' : confidence >= 0.5 ? 'medium' : 'low')).toLowerCase();
+    if (l === 'high') {
+      return <span className="connections__badge connections__badge--conf-high">High</span>;
+    }
+    if (l === 'medium') {
+      return <span className="connections__badge connections__badge--conf-med">Medium</span>;
+    }
+    return <span className="connections__badge" style={{ backgroundColor: '#F3F4F6', color: '#4B5563' }}>Low</span>;
   };
 
   const handleCheckConnection = async () => {
@@ -326,30 +458,46 @@ export function CompanyFilesPage() {
                 <h2 id="connections-heading">Connections</h2>
                 <p>Connect files that share a column so the chatbot can answer questions that use both.</p>
               </div>
-              <button
-                type="button"
-                className="button company-files__add-btn"
-                onClick={handleOpenAddConnection}
-                disabled={files.length < 2}
-                title={files.length < 2 ? 'Need at least 2 files to connect' : 'Add connection'}
-              >
-                Add connection
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="button company-files-btn-secondary"
+                  onClick={handleScan}
+                  disabled={files.length < 2 || isScanning}
+                  title={files.length < 2 ? 'Need at least 2 files to scan' : 'Scan files for relationship connections'}
+                >
+                  {isScanning ? 'Scanning...' : 'Scan for connections'}
+                </button>
+                <button
+                  type="button"
+                  className="button company-files__add-btn"
+                  onClick={handleOpenAddConnection}
+                  disabled={files.length < 2}
+                  title={files.length < 2 ? 'Need at least 2 files to connect' : 'Add connection'}
+                >
+                  Add connection
+                </button>
+              </div>
             </header>
 
             {connections.length === 0 ? (
-              <EmptyState title="No connections yet.">
-                Connect files that share a column so the chatbot can answer questions that use both.
-              </EmptyState>
+              <div className="company-files-table-container">
+                <EmptyState title="No connections yet.">
+                  Connect files that share a column so the chatbot can answer questions that use both.
+                </EmptyState>
+              </div>
             ) : (
               <div className="company-files-table-container">
                 <table className="company-files-table">
                   <thead>
                     <tr>
                       <th>CONNECTION</th>
+                      <th>ORIGIN</th>
+                      <th>CONFIDENCE</th>
                       <th>LINKED THROUGH</th>
                       <th>MATCH</th>
                       <th>STATUS</th>
+                      <th>EVIDENCE</th>
                       <th>ACTIONS</th>
                     </tr>
                   </thead>
@@ -359,14 +507,86 @@ export function CompanyFilesPage() {
                       const linkedThrough = `${conn.left?.key || ''} = ${conn.right?.key || ''}`;
                       const matchPct = Math.round((conn.match_rate || 0) * 100);
                       const isSuggested = (conn.status || '').toLowerCase() === 'suggested';
+                      const isAuto = conn.origin === 'auto';
+                      const isWhyOpen = activeWhyId === conn.id;
+                      const evidenceList = getEvidenceDescription(conn);
                       return (
                         <tr key={conn.id}>
-                          <td className="company-files__file-name">{connName}</td>
+                          <td className="company-files__file-name">
+                            {connName}
+                            {conn.review_needed && (
+                              <span className="connections__tag--new" title="New auto connection needing review">New</span>
+                            )}
+                          </td>
+                          <td>
+                            <span className="connections__origin">{isAuto ? 'Auto' : 'Manual'}</span>
+                          </td>
+                          <td>
+                            {getConfidenceBadge(conn.confidence, conn.confidence_label)}
+                          </td>
                           <td>{linkedThrough}</td>
                           <td>{matchPct}%</td>
                           <td>{getConnectionStatusBadge(conn.status)}</td>
                           <td>
+                            <div className="connections__why-container">
+                              <button
+                                type="button"
+                                className="connections__why-btn"
+                                aria-expanded={isWhyOpen}
+                                onClick={() => setActiveWhyId(isWhyOpen ? null : conn.id)}
+                              >
+                                Why?
+                              </button>
+                              {isWhyOpen && (
+                                <div className="connections__why-popover" role="dialog" aria-label="Connection evidence">
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <strong style={{ fontSize: '12px' }}>Evidence & Reasons</strong>
+                                    <button
+                                      type="button"
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#6B7280' }}
+                                      onClick={() => setActiveWhyId(null)}
+                                      aria-label="Close"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                  <ul>
+                                    {evidenceList.map((item, idx) => (
+                                      <li key={idx}>{item}</li>
+                                    ))}
+                                  </ul>
+                                  {conn.review_needed && (
+                                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #E5E7EB' }}>
+                                      <button
+                                        type="button"
+                                        className="company-files__action-btn"
+                                        onClick={() => {
+                                          review.mutate(conn.id);
+                                          setActiveWhyId(null);
+                                        }}
+                                        disabled={review.isPending}
+                                      >
+                                        Mark as reviewed
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td>
                             <div className="company-files__actions">
+                              {conn.review_needed && (
+                                <button
+                                  type="button"
+                                  className="company-files__action-btn"
+                                  onClick={() => review.mutate(conn.id)}
+                                  disabled={review.isPending}
+                                  title="Mark as reviewed"
+                                >
+                                  Reviewed
+                                </button>
+                              )}
                               {isSuggested ? (
                                 <>
                                   <button
@@ -536,8 +756,8 @@ export function CompanyFilesPage() {
                     onChange={(e) => {
                       const newId = e.target.value;
                       setFromFileId(newId);
-                      const fObj = files.find((f) => f.id === newId);
-                      const nonHidden = (fObj?.columns || []).filter((c) => !c.hidden);
+                      const cols = getFileColumns(newId);
+                      const nonHidden = cols.filter((c) => !c.hidden);
                       setFromCol(nonHidden[0]?.key || '');
                       setPreviewResult(null);
                       setPreviewError(null);
@@ -558,11 +778,15 @@ export function CompanyFilesPage() {
                     }}
                     aria-label="From column"
                   >
-                    {(files.find((f) => f.id === fromFileId)?.columns || [])
-                      .filter((c) => !c.hidden)
-                      .map((c) => (
-                        <option key={c.key} value={c.key}>{c.label || c.key}</option>
-                      ))}
+                    {getFileColumns(fromFileId).filter((c) => !c.hidden).length === 0 ? (
+                      <option value="">No available columns</option>
+                    ) : (
+                      getFileColumns(fromFileId)
+                        .filter((c) => !c.hidden)
+                        .map((c) => (
+                          <option key={c.key} value={c.key}>{c.label || c.key}</option>
+                        ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -576,8 +800,8 @@ export function CompanyFilesPage() {
                     onChange={(e) => {
                       const newId = e.target.value;
                       setToFileId(newId);
-                      const fObj = files.find((f) => f.id === newId);
-                      const nonHidden = (fObj?.columns || []).filter((c) => !c.hidden);
+                      const cols = getFileColumns(newId);
+                      const nonHidden = cols.filter((c) => !c.hidden);
                       setToCol(nonHidden[0]?.key || '');
                       setPreviewResult(null);
                       setPreviewError(null);
@@ -598,11 +822,15 @@ export function CompanyFilesPage() {
                     }}
                     aria-label="To column"
                   >
-                    {(files.find((f) => f.id === toFileId)?.columns || [])
-                      .filter((c) => !c.hidden)
-                      .map((c) => (
-                        <option key={c.key} value={c.key}>{c.label || c.key}</option>
-                      ))}
+                    {getFileColumns(toFileId).filter((c) => !c.hidden).length === 0 ? (
+                      <option value="">No available columns</option>
+                    ) : (
+                      getFileColumns(toFileId)
+                        .filter((c) => !c.hidden)
+                        .map((c) => (
+                          <option key={c.key} value={c.key}>{c.label || c.key}</option>
+                        ))
+                    )}
                   </select>
                 </div>
               </div>

@@ -25,6 +25,81 @@ function mapTypeName(type) {
   }
 }
 
+function getRoleBadge(col, detectedConnections = []) {
+  const match = (detectedConnections || []).find(
+    (dc) => dc.left_key === col.key || dc.right_key === col.key
+  );
+  if (match) {
+    const otherFile = match.left_key === col.key ? match.right_file_name : match.left_file_name;
+    const otherCol = match.left_key === col.key ? match.right_key : match.left_key;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#EDE9FE', color: '#6D28D9' }}>
+          Link
+        </span>
+        <span style={{ display: 'inline-block', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', background: '#DBEAFE', color: '#1E40AF', whiteSpace: 'nowrap' }}>
+          Links to {otherFile}.{otherCol}
+        </span>
+      </div>
+    );
+  }
+
+  const role = (col.role || '').toLowerCase();
+  switch (role) {
+    case 'identifier':
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#E0F2FE', color: '#0369A1' }}>
+          Identifier
+        </span>
+      );
+    case 'foreign_key':
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#EDE9FE', color: '#6D28D9' }}>
+          Link
+        </span>
+      );
+    case 'category':
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#FEF3C7', color: '#92400E' }}>
+          Category
+        </span>
+      );
+    case 'measure':
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#DCFCE7', color: '#15803D' }}>
+          Number
+        </span>
+      );
+    case 'date':
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#F3E8FF', color: '#7E22CE' }}>
+          Date
+        </span>
+      );
+    case 'personal':
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#FEE2E2', color: '#B91C1C' }}>
+          Personal
+        </span>
+      );
+    case 'text':
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#F3F4F6', color: '#374151' }}>
+          Text
+        </span>
+      );
+    default:
+      if (col.suggested_hidden) {
+        return (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#FEE2E2', color: '#B91C1C' }}>
+            Personal
+          </span>
+        );
+      }
+      return <span style={{ color: '#9CA3AF', fontSize: '12px' }}>Standalone</span>;
+  }
+}
+
 export function AddFilePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -84,6 +159,10 @@ export function AddFilePage() {
           suggested_hidden: Boolean(col.suggested_hidden),
           meaning: '',
           hidden: Boolean(col.suggested_hidden),
+          role: col.role,
+          role_confidence: col.role_confidence,
+          profile: col.profile,
+          linked_to: col.linked_to || [],
         })),
       );
     } catch (err) {
@@ -156,7 +235,11 @@ export function AddFilePage() {
 
     try {
       await createMutation.mutateAsync({ file: selectedFile, meta });
-      navigate(ROUTES.COMPANY_DATA, { state: { toast: `${meta.name} added` } });
+      const autoConns = previewData?.detected_connections?.filter((dc) => dc.label === 'high') || [];
+      const toastMsg = autoConns.length > 0
+        ? `We connected ${autoConns.length} file${autoConns.length === 1 ? '' : 's'} automatically. Review them below.`
+        : `${meta.name} added`;
+      navigate(ROUTES.COMPANY_DATA, { state: { toast: toastMsg } });
     } catch (err) {
       if (err?.code === 'FILE_EXISTS' || err?.message?.includes('FILE_EXISTS')) {
         setNameError('A file with this name already exists.');
@@ -263,6 +346,35 @@ export function AddFilePage() {
               )}
             </div>
 
+            {/* Connection Notification Note */}
+            {previewData?.detected_connections && previewData.detected_connections.length > 0 && (
+              <div
+                style={{
+                  backgroundColor: '#EBF5FF',
+                  border: '1px solid #BFDBFE',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '20px',
+                  color: '#1E40AF',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                }}
+                role="note"
+              >
+                {previewData.detected_connections.map((dc, i) => {
+                  const isHigh = dc.label === 'high';
+                  return (
+                    <div key={i} style={{ marginBottom: i > 0 ? '6px' : '0' }}>
+                      <strong>{isHigh ? 'High confidence match: ' : 'Medium confidence suggestion: '}</strong>
+                      {isHigh
+                        ? `This file looks connected to ${dc.other_file_name} through ${dc.left_key || dc.right_key}. It will be connected automatically after the import.`
+                        : `This file looks connected to ${dc.other_file_name} through ${dc.left_key || dc.right_key}. We will suggest this connection after the import.`}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* 2. File Name & Upload Mode */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
               <div>
@@ -336,6 +448,7 @@ export function AddFilePage() {
                       <tr>
                         <th>COLUMN</th>
                         <th>TYPE</th>
+                        <th>ROLE</th>
                         <th>EXAMPLE</th>
                         <th>MEANING</th>
                         <th style={{ textAlign: 'center' }}>HIDE FROM CHATBOT</th>
@@ -348,6 +461,7 @@ export function AddFilePage() {
                             <code>{col.key}</code>
                           </td>
                           <td>{mapTypeName(col.type)}</td>
+                          <td>{getRoleBadge(col, previewData?.detected_connections)}</td>
                           <td style={{ color: '#6B7280', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {col.example !== null && col.example !== undefined ? String(col.example) : '-'}
                           </td>
@@ -379,6 +493,38 @@ export function AddFilePage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Data Health Panel */}
+                {previewData?.data_health && (
+                  <div
+                    style={{
+                      marginTop: '16px',
+                      padding: '14px 18px',
+                      borderRadius: '8px',
+                      border: previewData.data_health.warnings?.length > 0 ? '1px solid #FDE68A' : '1px solid #BBF7D0',
+                      backgroundColor: previewData.data_health.warnings?.length > 0 ? '#FFFBEB' : '#F0FDF4',
+                      color: previewData.data_health.warnings?.length > 0 ? '#92400E' : '#166534',
+                    }}
+                    role="region"
+                    aria-label="Data health report"
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '14px', marginBottom: previewData.data_health.warnings?.length > 0 ? '8px' : '0' }}>
+                      <span>Data health:</span>
+                      <span>
+                        {previewData.data_health.warnings?.length > 0
+                          ? `${previewData.data_health.warnings.length} warning${previewData.data_health.warnings.length === 1 ? '' : 's'} detected`
+                          : 'Clean (No issues found)'}
+                      </span>
+                    </div>
+                    {previewData.data_health.warnings && previewData.data_health.warnings.length > 0 && (
+                      <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', lineHeight: 1.6 }}>
+                        {previewData.data_health.warnings.map((w, idx) => (
+                          <li key={idx}>{w.message}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
