@@ -47,3 +47,21 @@ export async function deleteConnection(id, options = {}) {
     ...options,
   });
 }
+
+export async function triggerScan(options = {}) {
+  return httpRequest('/v1/company/connections/scan', {
+    method: 'POST',
+    ...options,
+  });
+}
+
+export async function getScanState(options = {}) {
+  return httpRequest('/v1/company/connections/scan', options);
+}
+
+export async function markReviewed(id, options = {}) {
+  return httpRequest(`/v1/company/connections/${id}/reviewed`, {
+    method: 'POST',
+    ...options,
+  });
+}

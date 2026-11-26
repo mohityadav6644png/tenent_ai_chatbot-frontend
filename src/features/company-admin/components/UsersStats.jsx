@@ -7,7 +7,7 @@ const STATS = [
 ];
 
 export function UsersStats({ summary, isLoading }) {
-  if (isLoading) {
+  if (isLoading || !summary) {
     return (
       <div className="users-stats" aria-label="Loading user statistics">
         {STATS.map(([label]) => <div className="platform-stat-skeleton" key={label} />)}
@@ -17,9 +17,12 @@ export function UsersStats({ summary, isLoading }) {
 
   return (
     <div className="users-stats">
-      {STATS.map(([label, key]) => (
-        <StatCard key={key} label={label} value={new Intl.NumberFormat('en-US').format(summary[key])} />
-      ))}
+      {STATS.map(([label, key]) => {
+        const val = summary?.[key] ?? 0;
+        return (
+          <StatCard key={key} label={label} value={new Intl.NumberFormat('en-US').format(val)} />
+        );
+      })}
     </div>
   );
 }

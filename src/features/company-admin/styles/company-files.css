@@ -1,10 +1,39 @@
 /* Company Files Styles (company-files.css) */
 
+.company-files-page {
+  padding: 32px 32px 64px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .connections-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 24px;
+  margin-top: 16px;
+}
+
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-state h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0;
 }
 
 .connections-header {
@@ -667,4 +696,79 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.connections__badge--conf-high {
+  background-color: #DDF3E8;
+  color: #14633F;
+}
+
+.connections__badge--conf-med {
+  background-color: #FCEBC4;
+  color: #6B4A00;
+}
+
+.connections__origin {
+  font-size: 13px;
+  color: #4B5563;
+  font-weight: 500;
+}
+
+.connections__tag--new {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.connections__why-container {
+  position: relative;
+  display: inline-block;
+}
+
+.connections__why-btn {
+  background: none;
+  border: 1px solid #D1D5DB;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.connections__why-btn:hover {
+  background-color: #F3F4F6;
+  border-color: #9CA3AF;
+}
+
+.connections__why-popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  font-size: 12px;
+  color: #374151;
+  text-align: left;
+}
+
+.connections__why-popover ul {
+  margin: 6px 0 0 0;
+  padding-left: 16px;
+}
+
+.connections__why-popover li {
+  margin-bottom: 4px;
 }

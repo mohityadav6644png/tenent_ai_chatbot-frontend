@@ -88,7 +88,7 @@ export function mapChatError(error) {
       ? CHAT_ERROR_MESSAGES.RATE_LIMITED
       : CHAT_ERROR_MESSAGES[code] || 'We could not get an answer. Please try again.',
     rateLimited,
-    retryable: rateLimited || Boolean(error?.retryable ?? error?.error?.retryable),
+    retryable: rateLimited || Boolean(error?.retryable ?? error?.error?.retryable ?? (status >= 500)),
     retryAfterSeconds: rateLimited
       ? Number.isFinite(retryAfter) && retryAfter > 0 ? Math.ceil(retryAfter) : 300
       : undefined,

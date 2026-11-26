@@ -4,6 +4,8 @@ import {
   dismissSuggestion,
   refreshConnection,
   deleteConnection,
+  markReviewed,
+  triggerScan,
 } from '../../../api/v1/connections.api.js';
 import { CONNECTIONS_QUERY_KEY } from './useConnections.js';
 
@@ -38,10 +40,26 @@ export function useConnectionActions(options = {}) {
     },
   });
 
+  const review = useMutation({
+    mutationFn: (id) => markReviewed(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CONNECTIONS_QUERY_KEY });
+    },
+  });
+
+  const scan = useMutation({
+    mutationFn: () => triggerScan(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CONNECTIONS_QUERY_KEY });
+    },
+  });
+
   return {
     accept,
     dismiss,
     refresh,
     remove,
+    review,
+    scan,
   };
 }
